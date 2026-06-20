@@ -1,0 +1,16 @@
+package com.qadeer.uptimedesk.monitor;
+
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+
+public record CreateMonitorRequest(
+        @NotBlank String name,
+        @NotBlank String url,
+        @NotNull HttpMethod method,
+        @Min(100) @Max(599) int expectedStatusCode,
+        @Min(1) int intervalMinutes,
+        @Min(1) int timeoutSeconds
+) {
+}
