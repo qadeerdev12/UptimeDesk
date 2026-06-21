@@ -12,6 +12,7 @@ public record CreateMonitorRequest(
         @NotNull HttpMethod method,
         @Min(100) @Max(599) int expectedStatusCode,
         @Min(1) int intervalMinutes,
-        @Min(1) int timeoutSeconds
+        @Min(1) int timeoutSeconds,
+        @Min(1) @Max(10) Integer failureThreshold
 ) {
 }

@@ -46,6 +46,13 @@ public class Monitor {
     @Min(1)
     private int timeoutSeconds = 5;
 
+    @Min(1)
+    @Max(10)
+    private int failureThreshold = 2;
+
+    @Min(0)
+    private int consecutiveFailures = 0;
+
     private boolean active = true;
 
     @Enumerated(EnumType.STRING)

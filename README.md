@@ -16,6 +16,7 @@ Implemented:
 
 - Create, view, update, and delete API monitors
 - Configure monitor URL, HTTP method, expected status code, interval, timeout, and active state
+- Configure how many consecutive failures are required before a monitor is marked down
 - Run manual health checks from the dashboard
 - Run scheduled backend checks
 - Store check results with status code, latency, timestamp, and error details
@@ -199,6 +200,7 @@ Completed:
 - Monitor management frontend
 - Manual and scheduled checks
 - Check result storage
+- Retry-before-failure logic
 - Recent results UI
 - Backend integration tests
 - Frontend lint and production build checks

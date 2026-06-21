@@ -5,10 +5,6 @@ import com.qadeer.uptimedesk.monitor.MonitorRepository;
 import com.qadeer.uptimedesk.monitor.MonitorStatus;
 import org.springframework.stereotype.Service;
 
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.time.Instant;
 
@@ -17,10 +13,16 @@ public class MonitorCheckService {
 
     private final CheckResultRepository checkResultRepository;
     private final MonitorRepository monitorRepository;
+    private final EndpointCheckClient endpointCheckClient;
 
-    public MonitorCheckService(CheckResultRepository checkResultRepository, MonitorRepository monitorRepository) {
+    public MonitorCheckService(
+            CheckResultRepository checkResultRepository,
+            MonitorRepository monitorRepository,
+            EndpointCheckClient endpointCheckClient
+    ) {
         this.checkResultRepository = checkResultRepository;
         this.monitorRepository = monitorRepository;
+        this.endpointCheckClient = endpointCheckClient;
     }
 
     public CheckResult check(Monitor monitor) {
@@ -28,27 +30,21 @@ public class MonitorCheckService {
         CheckResult result = new CheckResult();
         result.setMonitor(monitor);
 
-        try {
-            HttpClient client = HttpClient.newBuilder()
-                    .connectTimeout(Duration.ofSeconds(monitor.getTimeoutSeconds()))
-                    .build();
+        EndpointCheck endpointCheck = endpointCheckClient.check(monitor);
+        result.setStatusCode(endpointCheck.statusCode());
+        result.setStatus(endpointCheck.success() ? CheckStatus.SUCCESS : CheckStatus.FAILURE);
+        result.setErrorMessage(endpointCheck.errorMessage());
 
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(monitor.getUrl()))
-                    .timeout(Duration.ofSeconds(monitor.getTimeoutSeconds()))
-                    .method(monitor.getMethod().name(), HttpRequest.BodyPublishers.noBody())
-                    .build();
+        if (endpointCheck.success()) {
+            monitor.setConsecutiveFailures(0);
+            monitor.setStatus(MonitorStatus.UP);
+        } else {
+            int consecutiveFailures = monitor.getConsecutiveFailures() + 1;
+            monitor.setConsecutiveFailures(consecutiveFailures);
 
-            HttpResponse<Void> response = client.send(request, HttpResponse.BodyHandlers.discarding());
-            boolean success = response.statusCode() == monitor.getExpectedStatusCode();
-
-            result.setStatusCode(response.statusCode());
-            result.setStatus(success ? CheckStatus.SUCCESS : CheckStatus.FAILURE);
-            monitor.setStatus(success ? MonitorStatus.UP : MonitorStatus.DOWN);
-        } catch (Exception ex) {
-            result.setStatus(CheckStatus.FAILURE);
-            result.setErrorMessage(ex.getMessage());
-            monitor.setStatus(MonitorStatus.DOWN);
+            if (consecutiveFailures >= monitor.getFailureThreshold()) {
+                monitor.setStatus(MonitorStatus.DOWN);
+            }
         }
 
         result.setResponseTimeMs(Duration.ofNanos(System.nanoTime() - startedAt).toMillis());

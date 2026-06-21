@@ -66,6 +66,7 @@ public class MonitorController {
         monitor.setExpectedStatusCode(request.expectedStatusCode());
         monitor.setIntervalMinutes(request.intervalMinutes());
         monitor.setTimeoutSeconds(request.timeoutSeconds());
+        monitor.setFailureThreshold(request.failureThreshold());
         monitor.setActive(request.active());
 
         return MonitorResponse.from(monitorRepository.save(monitor));
@@ -106,5 +107,6 @@ public class MonitorController {
         monitor.setExpectedStatusCode(request.expectedStatusCode());
         monitor.setIntervalMinutes(request.intervalMinutes());
         monitor.setTimeoutSeconds(request.timeoutSeconds());
+        monitor.setFailureThreshold(request.failureThreshold() == null ? 2 : request.failureThreshold());
     }
 }

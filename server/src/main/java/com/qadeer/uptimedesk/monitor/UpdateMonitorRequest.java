@@ -13,6 +13,7 @@ public record UpdateMonitorRequest(
         @Min(100) @Max(599) int expectedStatusCode,
         @Min(1) int intervalMinutes,
         @Min(1) int timeoutSeconds,
+        @Min(1) @Max(10) int failureThreshold,
         boolean active
 ) {
 }

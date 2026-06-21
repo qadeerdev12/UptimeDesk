@@ -7,6 +7,7 @@ export const emptyMonitorForm: MonitorFormValues = {
   expectedStatusCode: 200,
   intervalMinutes: 5,
   timeoutSeconds: 5,
+  failureThreshold: 2,
   active: true,
 }
 
@@ -20,6 +21,8 @@ export const sampleMonitors: Monitor[] = [
     expectedStatusCode: 200,
     intervalMinutes: 5,
     timeoutSeconds: 5,
+    failureThreshold: 2,
+    consecutiveFailures: 0,
     active: true,
     status: 'UP',
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 12).toISOString(),
@@ -33,6 +36,8 @@ export const sampleMonitors: Monitor[] = [
     expectedStatusCode: 200,
     intervalMinutes: 5,
     timeoutSeconds: 5,
+    failureThreshold: 2,
+    consecutiveFailures: 0,
     active: true,
     status: 'UP',
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 8).toISOString(),
@@ -46,6 +51,8 @@ export const sampleMonitors: Monitor[] = [
     expectedStatusCode: 200,
     intervalMinutes: 1,
     timeoutSeconds: 5,
+    failureThreshold: 2,
+    consecutiveFailures: 2,
     active: true,
     status: 'DOWN',
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 4).toISOString(),
@@ -88,6 +95,7 @@ export function toFormValues(monitor: Monitor): MonitorFormValues {
     expectedStatusCode: monitor.expectedStatusCode,
     intervalMinutes: monitor.intervalMinutes,
     timeoutSeconds: monitor.timeoutSeconds,
+    failureThreshold: monitor.failureThreshold,
     active: monitor.active,
   }
 }

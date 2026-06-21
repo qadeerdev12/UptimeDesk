@@ -63,6 +63,7 @@ class MonitorControllerIntegrationTest {
                   "expectedStatusCode": 204,
                   "intervalMinutes": 10,
                   "timeoutSeconds": 3,
+                  "failureThreshold": 2,
                   "active": false
                 }
                 """;

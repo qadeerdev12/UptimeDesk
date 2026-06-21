@@ -91,6 +91,17 @@ export function MonitorForm({
           />
         </Field>
       </div>
+      <Field label="Failures before down">
+        <input
+          className="input"
+          max={10}
+          min={1}
+          onChange={(event) => onChange({ ...form, failureThreshold: Number(event.target.value) })}
+          required
+          type="number"
+          value={form.failureThreshold}
+        />
+      </Field>
 
       {showActive && (
         <label className="flex items-center justify-between rounded-md border border-slate-200 px-3 py-2 text-sm">
