@@ -1,5 +1,6 @@
 HELP.md
 PROJECT_PLAN.md
+PROJECT_TIMELINE.md
 target/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/

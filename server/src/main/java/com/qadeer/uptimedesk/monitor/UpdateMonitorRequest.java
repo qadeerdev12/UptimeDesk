@@ -6,12 +6,13 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import org.hibernate.validator.constraints.URL;
 
-public record CreateMonitorRequest(
+public record UpdateMonitorRequest(
         @NotBlank String name,
         @NotBlank @URL String url,
         @NotNull HttpMethod method,
         @Min(100) @Max(599) int expectedStatusCode,
         @Min(1) int intervalMinutes,
-        @Min(1) int timeoutSeconds
+        @Min(1) int timeoutSeconds,
+        boolean active
 ) {
 }

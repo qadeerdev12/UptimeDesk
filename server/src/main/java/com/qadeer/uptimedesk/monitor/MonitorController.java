@@ -5,9 +5,11 @@ import com.qadeer.uptimedesk.check.CheckResultRepository;
 import com.qadeer.uptimedesk.check.MonitorCheckService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -34,26 +36,52 @@ public class MonitorController {
     }
 
     @GetMapping
-    List<Monitor> listMonitors() {
-        return monitorRepository.findAll();
+    List<MonitorResponse> listMonitors() {
+        return monitorRepository.findAll()
+                .stream()
+                .map(MonitorResponse::from)
+                .toList();
+    }
+
+    @GetMapping("/{id}")
+    MonitorResponse getMonitor(@PathVariable Long id) {
+        return MonitorResponse.from(findMonitor(id));
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    Monitor createMonitor(@Valid @RequestBody CreateMonitorRequest request) {
+    MonitorResponse createMonitor(@Valid @RequestBody CreateMonitorRequest request) {
         Monitor monitor = new Monitor();
+        applyCreateRequest(monitor, request);
+
+        return MonitorResponse.from(monitorRepository.save(monitor));
+    }
+
+    @PutMapping("/{id}")
+    MonitorResponse updateMonitor(@PathVariable Long id, @Valid @RequestBody UpdateMonitorRequest request) {
+        Monitor monitor = findMonitor(id);
         monitor.setName(request.name());
         monitor.setUrl(request.url());
         monitor.setMethod(request.method());
         monitor.setExpectedStatusCode(request.expectedStatusCode());
         monitor.setIntervalMinutes(request.intervalMinutes());
         monitor.setTimeoutSeconds(request.timeoutSeconds());
+        monitor.setActive(request.active());
 
-        return monitorRepository.save(monitor);
+        return MonitorResponse.from(monitorRepository.save(monitor));
+    }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    void deleteMonitor(@PathVariable Long id) {
+        Monitor monitor = findMonitor(id);
+        monitorRepository.delete(monitor);
     }
 
     @GetMapping("/{id}/results")
     List<CheckResultResponse> listRecentResults(@PathVariable Long id) {
+        findMonitor(id);
+
         return checkResultRepository.findTop20ByMonitorIdOrderByCheckedAtDesc(id)
                 .stream()
                 .map(CheckResultResponse::from)
@@ -62,9 +90,21 @@ public class MonitorController {
 
     @PostMapping("/{id}/run")
     CheckResultResponse runCheckNow(@PathVariable Long id) {
-        Monitor monitor = monitorRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Monitor not found"));
-
+        Monitor monitor = findMonitor(id);
         return CheckResultResponse.from(monitorCheckService.check(monitor));
+    }
+
+    private Monitor findMonitor(Long id) {
+        return monitorRepository.findById(id)
+                .orElseThrow(() -> new MonitorNotFoundException(id));
+    }
+
+    private void applyCreateRequest(Monitor monitor, CreateMonitorRequest request) {
+        monitor.setName(request.name());
+        monitor.setUrl(request.url());
+        monitor.setMethod(request.method());
+        monitor.setExpectedStatusCode(request.expectedStatusCode());
+        monitor.setIntervalMinutes(request.intervalMinutes());
+        monitor.setTimeoutSeconds(request.timeoutSeconds());
     }
 }
