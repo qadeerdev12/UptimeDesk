@@ -59,3 +59,7 @@ export function runMonitorCheck(id: number) {
 export function fetchCheckResults(id: number) {
   return request<CheckResult[]>(`/api/monitors/${id}/results`)
 }
+
+export function fetchCheckResult(id: number) {
+  return request<CheckResult>(`/api/check-results/${id}`)
+}

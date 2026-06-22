@@ -158,6 +158,7 @@ PUT    /api/monitors/{id}
 DELETE /api/monitors/{id}
 POST   /api/monitors/{id}/run
 GET    /api/monitors/{id}/results
+GET    /api/check-results/{id}
 ```
 
 Example monitor creation:
