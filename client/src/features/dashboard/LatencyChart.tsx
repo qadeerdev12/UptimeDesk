@@ -14,17 +14,30 @@ export type LatencyPoint = {
   latency: number
 }
 
+export type LatencyRange = 'latest' | '24h' | '7d' | '30d'
+
+const rangeLabels: Record<LatencyRange, string> = {
+  latest: 'Latest',
+  '24h': '24h',
+  '7d': '7d',
+  '30d': '30d',
+}
+
 export function LatencyChart({
+  activeRange,
   backendUnavailable,
   chartData,
   hasSelectedMonitor,
   isRunningCheck,
+  onRangeChange,
   onRunCheck,
 }: {
+  activeRange: LatencyRange
   backendUnavailable: boolean
   chartData: LatencyPoint[]
   hasSelectedMonitor: boolean
   isRunningCheck: boolean
+  onRangeChange: (range: LatencyRange) => void
   onRunCheck: () => void
 }) {
   return (
@@ -43,6 +56,23 @@ export function LatencyChart({
           {isRunningCheck ? <Loader2 className="animate-spin" size={15} /> : <RefreshCw size={15} />}
           Run check
         </button>
+      </div>
+
+      <div className="mb-4 inline-flex rounded-md border border-slate-200 bg-slate-50 p-1">
+        {(Object.keys(rangeLabels) as LatencyRange[]).map((range) => (
+          <button
+            className={`rounded px-3 py-1.5 text-sm font-medium transition ${
+              activeRange === range
+                ? 'bg-white text-slate-950 shadow-sm'
+                : 'text-slate-500 hover:text-slate-700'
+            }`}
+            key={range}
+            onClick={() => onRangeChange(range)}
+            type="button"
+          >
+            {rangeLabels[range]}
+          </button>
+        ))}
       </div>
 
       <div className="h-72">

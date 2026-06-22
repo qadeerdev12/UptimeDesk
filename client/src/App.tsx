@@ -21,6 +21,7 @@ import {
   toFormValues,
 } from './data/monitorDefaults'
 import { LatencyChart } from './features/dashboard/LatencyChart'
+import type { LatencyRange } from './features/dashboard/LatencyChart'
 import { MonitorDetailPanel } from './features/dashboard/MonitorDetailPanel'
 import { MonitorForm } from './features/dashboard/MonitorForm'
 import { MonitorTable } from './features/dashboard/MonitorTable'
@@ -34,6 +35,7 @@ function App() {
   const [editForm, setEditForm] = useState<MonitorFormValues>(emptyMonitorForm)
   const [selectedMonitorId, setSelectedMonitorId] = useState<number | null>(null)
   const [isEditing, setIsEditing] = useState(false)
+  const [latencyRange, setLatencyRange] = useState<LatencyRange>('latest')
   const [searchTerm, setSearchTerm] = useState('')
 
   const monitorsQuery = useQuery({
@@ -121,7 +123,10 @@ function App() {
     [checkResults, dashboardSummaryQuery.data, monitors],
   )
 
-  const chartData = useMemo(() => buildLatencyChartData(checkResults), [checkResults])
+  const chartData = useMemo(
+    () => buildLatencyChartData(checkResults, latencyRange),
+    [checkResults, latencyRange],
+  )
 
   function handleCreate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -178,10 +183,12 @@ function App() {
 
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
           <LatencyChart
+            activeRange={latencyRange}
             backendUnavailable={backendUnavailable}
             chartData={chartData}
             hasSelectedMonitor={Boolean(selectedMonitor)}
             isRunningCheck={runCheckMutation.isPending}
+            onRangeChange={setLatencyRange}
             onRunCheck={() => selectedMonitor && runCheckMutation.mutate(selectedMonitor.id)}
           />
 
@@ -293,14 +300,29 @@ function calculateDashboardStats(
   return { active, total: monitors.length, down, uptime, avgLatency }
 }
 
-function buildLatencyChartData(checkResults: CheckResult[]) {
-  return [...checkResults]
+function buildLatencyChartData(checkResults: CheckResult[], range: LatencyRange) {
+  return filterCheckResultsByRange(checkResults, range)
     .reverse()
     .slice(-8)
     .map((result) => ({
       time: formatTime(result.checkedAt),
       latency: result.responseTimeMs,
     }))
+}
+
+function filterCheckResultsByRange(checkResults: CheckResult[], range: LatencyRange) {
+  if (range === 'latest') {
+    return [...checkResults]
+  }
+
+  const now = Date.now()
+  const rangeMs = {
+    '24h': 24 * 60 * 60 * 1000,
+    '7d': 7 * 24 * 60 * 60 * 1000,
+    '30d': 30 * 24 * 60 * 60 * 1000,
+  }[range]
+
+  return checkResults.filter((result) => now - new Date(result.checkedAt).getTime() <= rangeMs)
 }
 
 export default App
