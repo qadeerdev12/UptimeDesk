@@ -267,17 +267,6 @@ function calculateDashboardStats(monitors: Monitor[], checkResults: CheckResult[
 }
 
 function buildLatencyChartData(checkResults: CheckResult[]) {
-  if (checkResults.length === 0) {
-    return [
-      { time: '09:00', latency: 142 },
-      { time: '10:00', latency: 156 },
-      { time: '11:00', latency: 149 },
-      { time: '12:00', latency: 181 },
-      { time: '13:00', latency: 176 },
-      { time: '14:00', latency: 214 },
-    ]
-  }
-
   return [...checkResults]
     .reverse()
     .slice(-8)

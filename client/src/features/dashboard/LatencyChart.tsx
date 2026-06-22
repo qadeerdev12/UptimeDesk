@@ -46,21 +46,30 @@ export function LatencyChart({
       </div>
 
       <div className="h-72">
-        <ResponsiveContainer height="100%" width="100%">
-          <AreaChart data={chartData}>
-            <defs>
-              <linearGradient id="latency" x1="0" x2="0" y1="0" y2="1">
-                <stop offset="5%" stopColor="#2563eb" stopOpacity={0.25} />
-                <stop offset="95%" stopColor="#2563eb" stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid stroke="#e2e8f0" strokeDasharray="3 3" vertical={false} />
-            <XAxis axisLine={false} dataKey="time" tickLine={false} />
-            <YAxis axisLine={false} tickLine={false} />
-            <Tooltip />
-            <Area dataKey="latency" fill="url(#latency)" stroke="#2563eb" strokeWidth={2} type="monotone" />
-          </AreaChart>
-        </ResponsiveContainer>
+        {chartData.length === 0 ? (
+          <div className="flex h-full items-center justify-center rounded-md border border-dashed border-slate-200 bg-slate-50 px-4 text-center">
+            <div>
+              <p className="font-medium text-slate-700">No latency data yet</p>
+              <p className="mt-1 text-sm text-slate-500">Run a check to start plotting real response times.</p>
+            </div>
+          </div>
+        ) : (
+          <ResponsiveContainer height="100%" width="100%">
+            <AreaChart data={chartData}>
+              <defs>
+                <linearGradient id="latency" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="5%" stopColor="#2563eb" stopOpacity={0.25} />
+                  <stop offset="95%" stopColor="#2563eb" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid stroke="#e2e8f0" strokeDasharray="3 3" vertical={false} />
+              <XAxis axisLine={false} dataKey="time" tickLine={false} />
+              <YAxis axisLine={false} tickLine={false} />
+              <Tooltip />
+              <Area dataKey="latency" fill="url(#latency)" stroke="#2563eb" strokeWidth={2} type="monotone" />
+            </AreaChart>
+          </ResponsiveContainer>
+        )}
       </div>
     </section>
   )

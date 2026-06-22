@@ -24,7 +24,7 @@ Implemented:
 - Store check results with status code, latency, timestamp, and error details
 - View monitor status, configuration, and recent check results
 - Search monitored services
-- Display dashboard metrics and latency chart
+- Display dashboard metrics and latency chart from collected check results
 - Handle loading, empty, error, and backend-offline states
 
 Planned:
@@ -204,7 +204,7 @@ Completed:
 - Check result storage
 - Retry-before-failure logic
 - Custom request headers for health checks
-- Recent results UI
+- Recent results UI and real latency chart data
 - Backend integration tests
 - Frontend lint and production build checks
 
