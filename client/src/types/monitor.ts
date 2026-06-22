@@ -12,6 +12,7 @@ export type Monitor = {
   expectedStatusCode: number
   intervalMinutes: number
   timeoutSeconds: number
+  expectedKeyword?: string
   failureThreshold: number
   consecutiveFailures: number
   active: boolean
@@ -37,6 +38,7 @@ export type MonitorFormValues = {
   expectedStatusCode: number
   intervalMinutes: number
   timeoutSeconds: number
+  expectedKeyword: string
   failureThreshold: number
   active: boolean
 }

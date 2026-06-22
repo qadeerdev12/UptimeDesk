@@ -69,6 +69,7 @@ export function MonitorDetailPanel({
                 <DetailItem label="Interval" value={`${monitor.intervalMinutes} min`} />
                 <DetailItem label="Timeout" value={`${monitor.timeoutSeconds} sec`} />
                 <DetailItem label="Failures" value={`${monitor.consecutiveFailures}/${monitor.failureThreshold}`} />
+                <DetailItem label="Keyword" value={monitor.expectedKeyword || 'Not required'} />
                 <DetailItem label="Active" value={monitor.active ? 'Yes' : 'No'} />
                 <DetailItem label="Last check" value={formatDateTime(monitor.lastCheckedAt)} />
               </div>

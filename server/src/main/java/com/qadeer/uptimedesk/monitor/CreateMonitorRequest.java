@@ -13,6 +13,7 @@ public record CreateMonitorRequest(
         @Min(100) @Max(599) int expectedStatusCode,
         @Min(1) int intervalMinutes,
         @Min(1) int timeoutSeconds,
+        String expectedKeyword,
         @Min(1) @Max(10) Integer failureThreshold
 ) {
 }

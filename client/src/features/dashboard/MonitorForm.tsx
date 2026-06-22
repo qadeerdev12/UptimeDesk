@@ -102,6 +102,14 @@ export function MonitorForm({
           value={form.failureThreshold}
         />
       </Field>
+      <Field label="Expected keyword optional">
+        <input
+          className="input"
+          onChange={(event) => onChange({ ...form, expectedKeyword: event.target.value })}
+          placeholder="OK, healthy, ready"
+          value={form.expectedKeyword}
+        />
+      </Field>
 
       {showActive && (
         <label className="flex items-center justify-between rounded-md border border-slate-200 px-3 py-2 text-sm">

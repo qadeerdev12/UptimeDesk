@@ -66,6 +66,7 @@ public class MonitorController {
         monitor.setExpectedStatusCode(request.expectedStatusCode());
         monitor.setIntervalMinutes(request.intervalMinutes());
         monitor.setTimeoutSeconds(request.timeoutSeconds());
+        monitor.setExpectedKeyword(normalizeOptionalText(request.expectedKeyword()));
         monitor.setFailureThreshold(request.failureThreshold());
         monitor.setActive(request.active());
 
@@ -107,6 +108,15 @@ public class MonitorController {
         monitor.setExpectedStatusCode(request.expectedStatusCode());
         monitor.setIntervalMinutes(request.intervalMinutes());
         monitor.setTimeoutSeconds(request.timeoutSeconds());
+        monitor.setExpectedKeyword(normalizeOptionalText(request.expectedKeyword()));
         monitor.setFailureThreshold(request.failureThreshold() == null ? 2 : request.failureThreshold());
+    }
+
+    private String normalizeOptionalText(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+
+        return value.trim();
     }
 }

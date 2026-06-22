@@ -46,6 +46,8 @@ public class Monitor {
     @Min(1)
     private int timeoutSeconds = 5;
 
+    private String expectedKeyword;
+
     @Min(1)
     @Max(10)
     private int failureThreshold = 2;

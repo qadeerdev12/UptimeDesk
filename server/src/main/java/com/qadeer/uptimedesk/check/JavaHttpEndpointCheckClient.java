@@ -25,17 +25,27 @@ public class JavaHttpEndpointCheckClient implements EndpointCheckClient {
                     .method(monitor.getMethod().name(), HttpRequest.BodyPublishers.noBody())
                     .build();
 
-            HttpResponse<Void> response = client.send(request, HttpResponse.BodyHandlers.discarding());
-            boolean success = response.statusCode() == monitor.getExpectedStatusCode();
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            boolean statusMatches = response.statusCode() == monitor.getExpectedStatusCode();
 
-            if (success) {
-                return EndpointCheck.success(response.statusCode());
+            if (!statusMatches) {
+                return EndpointCheck.failure(
+                        response.statusCode(),
+                        "Expected HTTP " + monitor.getExpectedStatusCode() + " but received HTTP " + response.statusCode()
+                );
             }
 
-            return EndpointCheck.failure(
-                    response.statusCode(),
-                    "Expected HTTP " + monitor.getExpectedStatusCode() + " but received HTTP " + response.statusCode()
-            );
+            String expectedKeyword = monitor.getExpectedKeyword();
+            boolean keywordRequired = expectedKeyword != null && !expectedKeyword.isBlank();
+
+            if (keywordRequired && !response.body().contains(expectedKeyword)) {
+                return EndpointCheck.failure(
+                        response.statusCode(),
+                        "Response did not contain expected keyword: " + expectedKeyword
+                );
+            }
+
+            return EndpointCheck.success(response.statusCode());
         } catch (Exception ex) {
             return EndpointCheck.failure(null, ex.getMessage());
         }

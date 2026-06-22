@@ -16,6 +16,7 @@ Implemented:
 
 - Create, view, update, and delete API monitors
 - Configure monitor URL, HTTP method, expected status code, interval, timeout, and active state
+- Optionally require a keyword in the response body for deeper health checks
 - Configure how many consecutive failures are required before a monitor is marked down
 - Run manual health checks from the dashboard
 - Run scheduled backend checks
