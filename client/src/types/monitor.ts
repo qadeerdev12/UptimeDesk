@@ -4,6 +4,8 @@ export type MonitorStatus = 'UNKNOWN' | 'UP' | 'DOWN'
 
 export type CheckStatus = 'SUCCESS' | 'FAILURE'
 
+export type IncidentTransition = 'NONE' | 'OPEN_INCIDENT' | 'RESOLVE_INCIDENT'
+
 export type Monitor = {
   id: number
   name: string
@@ -29,6 +31,8 @@ export type CheckResult = {
   statusCode?: number
   responseTimeMs: number
   status: CheckStatus
+  incidentTransition: IncidentTransition
+  incidentReason?: string
   errorMessage?: string
 }
 

@@ -78,6 +78,7 @@ export const sampleCheckResults: CheckResult[] = [
     statusCode: 200,
     responseTimeMs: 142,
     status: 'SUCCESS',
+    incidentTransition: 'NONE',
   },
   {
     id: 102,
@@ -86,6 +87,8 @@ export const sampleCheckResults: CheckResult[] = [
     statusCode: 200,
     responseTimeMs: 156,
     status: 'SUCCESS',
+    incidentTransition: 'RESOLVE_INCIDENT',
+    incidentReason: 'Monitor recovered after a successful check.',
   },
   {
     id: 103,
@@ -94,6 +97,8 @@ export const sampleCheckResults: CheckResult[] = [
     statusCode: 200,
     responseTimeMs: 149,
     status: 'SUCCESS',
+    incidentTransition: 'OPEN_INCIDENT',
+    incidentReason: 'Monitor reached 2 consecutive failures; threshold is 2.',
   },
 ]
 

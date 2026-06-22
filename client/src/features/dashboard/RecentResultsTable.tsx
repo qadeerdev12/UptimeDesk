@@ -35,6 +35,7 @@ export function RecentResultsTable({
                 <th className="px-4 py-3">Result</th>
                 <th className="px-4 py-3">Status code</th>
                 <th className="px-4 py-3">Latency</th>
+                <th className="px-4 py-3">Incident rule</th>
                 <th className="px-4 py-3">Error</th>
               </tr>
             </thead>
@@ -47,8 +48,11 @@ export function RecentResultsTable({
                   </td>
                   <td className="px-4 py-3 text-slate-600">{result.statusCode ?? '-'}</td>
                   <td className="px-4 py-3 text-slate-600">{result.responseTimeMs} ms</td>
+                  <td className="px-4 py-3">
+                    <IncidentRuleLabel transition={result.incidentTransition} />
+                  </td>
                   <td className="max-w-[360px] truncate px-4 py-3 text-slate-500">
-                    {result.errorMessage ?? '-'}
+                    {result.errorMessage ?? result.incidentReason ?? '-'}
                   </td>
                 </tr>
               ))}
@@ -58,4 +62,16 @@ export function RecentResultsTable({
       )}
     </section>
   )
+}
+
+function IncidentRuleLabel({ transition }: { transition: CheckResult['incidentTransition'] }) {
+  if (transition === 'OPEN_INCIDENT') {
+    return <span className="text-sm font-medium text-red-600">Open</span>
+  }
+
+  if (transition === 'RESOLVE_INCIDENT') {
+    return <span className="text-sm font-medium text-emerald-600">Resolve</span>
+  }
+
+  return <span className="text-sm text-slate-400">No action</span>
 }

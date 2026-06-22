@@ -1,5 +1,7 @@
 package com.qadeer.uptimedesk.check;
 
+import com.qadeer.uptimedesk.incident.IncidentTransition;
+
 import java.time.Instant;
 
 public record CheckResultResponse(
@@ -9,6 +11,8 @@ public record CheckResultResponse(
         Integer statusCode,
         long responseTimeMs,
         CheckStatus status,
+        IncidentTransition incidentTransition,
+        String incidentReason,
         String errorMessage
 ) {
     public static CheckResultResponse from(CheckResult result) {
@@ -19,6 +23,8 @@ public record CheckResultResponse(
                 result.getStatusCode(),
                 result.getResponseTimeMs(),
                 result.getStatus(),
+                result.getIncidentTransition(),
+                result.getIncidentReason(),
                 result.getErrorMessage()
         );
     }

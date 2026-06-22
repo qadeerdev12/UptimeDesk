@@ -1,5 +1,6 @@
 package com.qadeer.uptimedesk.check;
 
+import com.qadeer.uptimedesk.incident.IncidentTransition;
 import com.qadeer.uptimedesk.monitor.Monitor;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -34,6 +35,11 @@ public class CheckResult {
 
     @Enumerated(EnumType.STRING)
     private CheckStatus status;
+
+    @Enumerated(EnumType.STRING)
+    private IncidentTransition incidentTransition = IncidentTransition.NONE;
+
+    private String incidentReason;
 
     private String errorMessage;
 }

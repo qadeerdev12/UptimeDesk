@@ -1,5 +1,7 @@
 package com.qadeer.uptimedesk.check;
 
+import com.qadeer.uptimedesk.incident.IncidentRuleEngine;
+import com.qadeer.uptimedesk.incident.IncidentTransition;
 import com.qadeer.uptimedesk.monitor.Monitor;
 import com.qadeer.uptimedesk.monitor.MonitorRepository;
 import com.qadeer.uptimedesk.monitor.MonitorStatus;
@@ -35,16 +37,20 @@ class MonitorCheckServiceTest {
         MonitorCheckService service = new MonitorCheckService(
                 checkResultRepository,
                 monitorRepository,
-                endpointCheckClient
+                endpointCheckClient,
+                new IncidentRuleEngine()
         );
 
-        service.check(monitor);
+        CheckResult firstResult = service.check(monitor);
 
+        assertThat(firstResult.getIncidentTransition()).isEqualTo(IncidentTransition.NONE);
         assertThat(monitor.getConsecutiveFailures()).isEqualTo(1);
         assertThat(monitor.getStatus()).isEqualTo(MonitorStatus.UNKNOWN);
 
-        service.check(monitor);
+        CheckResult secondResult = service.check(monitor);
 
+        assertThat(secondResult.getIncidentTransition()).isEqualTo(IncidentTransition.OPEN_INCIDENT);
+        assertThat(secondResult.getIncidentReason()).contains("threshold is 2");
         assertThat(monitor.getConsecutiveFailures()).isEqualTo(2);
         assertThat(monitor.getStatus()).isEqualTo(MonitorStatus.DOWN);
     }
@@ -62,12 +68,15 @@ class MonitorCheckServiceTest {
         MonitorCheckService service = new MonitorCheckService(
                 checkResultRepository,
                 monitorRepository,
-                endpointCheckClient
+                endpointCheckClient,
+                new IncidentRuleEngine()
         );
 
         CheckResult result = service.check(monitor);
 
         assertThat(result.getStatus()).isEqualTo(CheckStatus.SUCCESS);
+        assertThat(result.getIncidentTransition()).isEqualTo(IncidentTransition.RESOLVE_INCIDENT);
+        assertThat(result.getIncidentReason()).contains("recovered");
         assertThat(monitor.getConsecutiveFailures()).isZero();
         assertThat(monitor.getStatus()).isEqualTo(MonitorStatus.UP);
     }

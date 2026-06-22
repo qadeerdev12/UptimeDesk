@@ -22,6 +22,7 @@ Implemented:
 - Run manual health checks from the dashboard
 - Run scheduled backend checks
 - Store check results with status code, latency, timestamp, and error details
+- Record incident-rule outcomes when checks would open or resolve an incident
 - View monitor status, configuration, and recent check results
 - Search monitored services
 - Display dashboard metrics and latency chart from collected check results
@@ -204,6 +205,7 @@ Completed:
 - Check result storage
 - Retry-before-failure logic
 - Custom request headers for health checks
+- Incident-rule foundation for outage and recovery tracking
 - Recent results UI and real latency chart data
 - Backend integration tests
 - Frontend lint and production build checks

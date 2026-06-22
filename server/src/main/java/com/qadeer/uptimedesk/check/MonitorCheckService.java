@@ -1,5 +1,7 @@
 package com.qadeer.uptimedesk.check;
 
+import com.qadeer.uptimedesk.incident.IncidentDecision;
+import com.qadeer.uptimedesk.incident.IncidentRuleEngine;
 import com.qadeer.uptimedesk.monitor.Monitor;
 import com.qadeer.uptimedesk.monitor.MonitorRepository;
 import com.qadeer.uptimedesk.monitor.MonitorStatus;
@@ -14,19 +16,23 @@ public class MonitorCheckService {
     private final CheckResultRepository checkResultRepository;
     private final MonitorRepository monitorRepository;
     private final EndpointCheckClient endpointCheckClient;
+    private final IncidentRuleEngine incidentRuleEngine;
 
     public MonitorCheckService(
             CheckResultRepository checkResultRepository,
             MonitorRepository monitorRepository,
-            EndpointCheckClient endpointCheckClient
+            EndpointCheckClient endpointCheckClient,
+            IncidentRuleEngine incidentRuleEngine
     ) {
         this.checkResultRepository = checkResultRepository;
         this.monitorRepository = monitorRepository;
         this.endpointCheckClient = endpointCheckClient;
+        this.incidentRuleEngine = incidentRuleEngine;
     }
 
     public CheckResult check(Monitor monitor) {
         long startedAt = System.nanoTime();
+        MonitorStatus previousMonitorStatus = monitor.getStatus();
         CheckResult result = new CheckResult();
         result.setMonitor(monitor);
 
@@ -46,6 +52,16 @@ public class MonitorCheckService {
                 monitor.setStatus(MonitorStatus.DOWN);
             }
         }
+
+        IncidentDecision incidentDecision = incidentRuleEngine.evaluate(
+                previousMonitorStatus,
+                monitor.getStatus(),
+                result.getStatus(),
+                monitor.getConsecutiveFailures(),
+                monitor.getFailureThreshold()
+        );
+        result.setIncidentTransition(incidentDecision.transition());
+        result.setIncidentReason(incidentDecision.reason());
 
         result.setResponseTimeMs(Duration.ofNanos(System.nanoTime() - startedAt).toMillis());
         monitor.setLastCheckedAt(Instant.now());
