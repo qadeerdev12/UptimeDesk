@@ -46,7 +46,7 @@ export function MonitorDetailPanel({
               <h2 className="mt-1 font-semibold text-slate-950">{monitor.name}</h2>
               <p className="mt-1 break-all text-sm text-slate-500">{monitor.url}</p>
             </div>
-            <StatusBadge status={monitor.status} />
+            <StatusBadge monitor={monitor} />
           </div>
 
           {isEditing ? (

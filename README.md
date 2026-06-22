@@ -26,6 +26,7 @@ Implemented:
 - View monitor status, configuration, and recent check results
 - Search monitored services
 - Display dashboard metrics and latency chart from collected check results
+- Show clear monitor status pills for Operational, Degraded, Down, and Unknown states
 - Handle loading, empty, error, and backend-offline states
 
 Planned:
@@ -209,6 +210,7 @@ Completed:
 - Custom request headers for health checks
 - Incident-rule foundation for outage and recovery tracking
 - Recent results UI and real latency chart data
+- Backend-driven dashboard analytics and status pills
 - Backend integration tests
 - Frontend lint and production build checks
 

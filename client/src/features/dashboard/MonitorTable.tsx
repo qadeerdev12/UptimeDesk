@@ -55,7 +55,7 @@ export function MonitorTable({
                   <td className="px-5 py-4 font-medium text-slate-950">{monitor.name}</td>
                   <td className="max-w-[320px] truncate px-5 py-4 text-slate-500">{monitor.url}</td>
                   <td className="px-5 py-4">
-                    <StatusBadge status={monitor.status} />
+                    <StatusBadge monitor={monitor} />
                   </td>
                   <td className="px-5 py-4 text-slate-600">
                     {monitor.method} {monitor.expectedStatusCode}
