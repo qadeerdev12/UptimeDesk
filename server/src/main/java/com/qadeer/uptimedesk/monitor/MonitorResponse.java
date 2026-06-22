@@ -1,6 +1,7 @@
 package com.qadeer.uptimedesk.monitor;
 
 import java.time.Instant;
+import java.util.Map;
 
 public record MonitorResponse(
         Long id,
@@ -11,6 +12,7 @@ public record MonitorResponse(
         int intervalMinutes,
         int timeoutSeconds,
         String expectedKeyword,
+        Map<String, String> requestHeaders,
         int failureThreshold,
         int consecutiveFailures,
         boolean active,
@@ -28,6 +30,7 @@ public record MonitorResponse(
                 monitor.getIntervalMinutes(),
                 monitor.getTimeoutSeconds(),
                 monitor.getExpectedKeyword(),
+                monitor.getRequestHeaders(),
                 monitor.getFailureThreshold(),
                 monitor.getConsecutiveFailures(),
                 monitor.isActive(),

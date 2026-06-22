@@ -15,7 +15,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/monitors")
@@ -67,6 +69,7 @@ public class MonitorController {
         monitor.setIntervalMinutes(request.intervalMinutes());
         monitor.setTimeoutSeconds(request.timeoutSeconds());
         monitor.setExpectedKeyword(normalizeOptionalText(request.expectedKeyword()));
+        monitor.setRequestHeaders(normalizeHeaders(request.requestHeaders()));
         monitor.setFailureThreshold(request.failureThreshold());
         monitor.setActive(request.active());
 
@@ -109,6 +112,7 @@ public class MonitorController {
         monitor.setIntervalMinutes(request.intervalMinutes());
         monitor.setTimeoutSeconds(request.timeoutSeconds());
         monitor.setExpectedKeyword(normalizeOptionalText(request.expectedKeyword()));
+        monitor.setRequestHeaders(normalizeHeaders(request.requestHeaders()));
         monitor.setFailureThreshold(request.failureThreshold() == null ? 2 : request.failureThreshold());
     }
 
@@ -118,5 +122,21 @@ public class MonitorController {
         }
 
         return value.trim();
+    }
+
+    private Map<String, String> normalizeHeaders(Map<String, String> requestHeaders) {
+        Map<String, String> normalizedHeaders = new LinkedHashMap<>();
+
+        if (requestHeaders == null) {
+            return normalizedHeaders;
+        }
+
+        requestHeaders.forEach((name, value) -> {
+            if (name != null && !name.isBlank() && value != null && !value.isBlank()) {
+                normalizedHeaders.put(name.trim(), value.trim());
+            }
+        });
+
+        return normalizedHeaders;
     }
 }

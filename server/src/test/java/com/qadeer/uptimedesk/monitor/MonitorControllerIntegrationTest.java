@@ -64,6 +64,9 @@ class MonitorControllerIntegrationTest {
                   "intervalMinutes": 10,
                   "timeoutSeconds": 3,
                   "expectedKeyword": "ready",
+                  "requestHeaders": {
+                    "X-Health-Check": "uptimedesk"
+                  },
                   "failureThreshold": 2,
                   "active": false
                 }
@@ -76,6 +79,7 @@ class MonitorControllerIntegrationTest {
                 .andExpect(jsonPath("$.name").value("Portfolio Website"))
                 .andExpect(jsonPath("$.expectedStatusCode").value(204))
                 .andExpect(jsonPath("$.expectedKeyword").value("ready"))
+                .andExpect(jsonPath("$.requestHeaders.X-Health-Check").value("uptimedesk"))
                 .andExpect(jsonPath("$.active").value(false));
 
         mockMvc.perform(delete("/api/monitors/{id}", monitorId))

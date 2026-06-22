@@ -2,6 +2,7 @@ import type { FormEvent } from 'react'
 import { Loader2, Save, X } from 'lucide-react'
 import { Field } from '../../components/ui/Field'
 import type { HttpMethod, MonitorFormValues } from '../../types/monitor'
+import { formatHeaders, parseHeaders } from '../../utils/headers'
 
 export function MonitorForm({
   actionLabel,
@@ -108,6 +109,14 @@ export function MonitorForm({
           onChange={(event) => onChange({ ...form, expectedKeyword: event.target.value })}
           placeholder="OK, healthy, ready"
           value={form.expectedKeyword}
+        />
+      </Field>
+      <Field label="Request headers optional">
+        <textarea
+          className="input min-h-24 resize-y"
+          onChange={(event) => onChange({ ...form, requestHeaders: parseHeaders(event.target.value) })}
+          placeholder={'Authorization: Bearer test-token\nX-Health-Check: true'}
+          value={formatHeaders(form.requestHeaders)}
         />
       </Field>
 

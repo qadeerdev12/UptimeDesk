@@ -35,6 +35,7 @@ export function createMonitor(payload: MonitorFormValues) {
       intervalMinutes: payload.intervalMinutes,
       timeoutSeconds: payload.timeoutSeconds,
       expectedKeyword: payload.expectedKeyword,
+      requestHeaders: payload.requestHeaders,
       failureThreshold: payload.failureThreshold,
     }),
   })

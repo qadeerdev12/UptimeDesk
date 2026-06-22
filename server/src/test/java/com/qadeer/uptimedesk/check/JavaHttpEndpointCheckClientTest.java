@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -49,6 +50,35 @@ class JavaHttpEndpointCheckClientTest {
         assertThat(result.success()).isFalse();
         assertThat(result.statusCode()).isEqualTo(200);
         assertThat(result.errorMessage()).contains("expected keyword");
+    }
+
+    @Test
+    void sendsConfiguredRequestHeaders() throws IOException {
+        server = HttpServer.create(new InetSocketAddress(0), 0);
+        server.createContext("/health", exchange -> {
+            String headerValue = exchange.getRequestHeaders().getFirst("X-Health-Check");
+
+            if ("uptimedesk".equals(headerValue)) {
+                byte[] response = "service is healthy".getBytes(StandardCharsets.UTF_8);
+                exchange.sendResponseHeaders(200, response.length);
+                exchange.getResponseBody().write(response);
+            } else {
+                byte[] response = "missing header".getBytes(StandardCharsets.UTF_8);
+                exchange.sendResponseHeaders(401, response.length);
+                exchange.getResponseBody().write(response);
+            }
+
+            exchange.close();
+        });
+        server.start();
+
+        Monitor monitor = monitorFor("/health");
+        monitor.setRequestHeaders(Map.of("X-Health-Check", "uptimedesk"));
+
+        EndpointCheck result = new JavaHttpEndpointCheckClient().check(monitor);
+
+        assertThat(result.success()).isTrue();
+        assertThat(result.statusCode()).isEqualTo(200);
     }
 
     private void startServer(String responseBody) throws IOException {

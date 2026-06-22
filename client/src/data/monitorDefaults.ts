@@ -8,6 +8,7 @@ export const emptyMonitorForm: MonitorFormValues = {
   intervalMinutes: 5,
   timeoutSeconds: 5,
   expectedKeyword: '',
+  requestHeaders: {},
   failureThreshold: 2,
   active: true,
 }
@@ -23,6 +24,7 @@ export const sampleMonitors: Monitor[] = [
     intervalMinutes: 5,
     timeoutSeconds: 5,
     expectedKeyword: '',
+    requestHeaders: {},
     failureThreshold: 2,
     consecutiveFailures: 0,
     active: true,
@@ -39,6 +41,9 @@ export const sampleMonitors: Monitor[] = [
     intervalMinutes: 5,
     timeoutSeconds: 5,
     expectedKeyword: '',
+    requestHeaders: {
+      'X-Health-Check': 'uptimedesk',
+    },
     failureThreshold: 2,
     consecutiveFailures: 0,
     active: true,
@@ -55,6 +60,7 @@ export const sampleMonitors: Monitor[] = [
     intervalMinutes: 1,
     timeoutSeconds: 5,
     expectedKeyword: 'OK',
+    requestHeaders: {},
     failureThreshold: 2,
     consecutiveFailures: 2,
     active: true,
@@ -100,6 +106,7 @@ export function toFormValues(monitor: Monitor): MonitorFormValues {
     intervalMinutes: monitor.intervalMinutes,
     timeoutSeconds: monitor.timeoutSeconds,
     expectedKeyword: monitor.expectedKeyword ?? '',
+    requestHeaders: monitor.requestHeaders ?? {},
     failureThreshold: monitor.failureThreshold,
     active: monitor.active,
   }

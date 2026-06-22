@@ -19,11 +19,14 @@ public class JavaHttpEndpointCheckClient implements EndpointCheckClient {
                     .connectTimeout(Duration.ofSeconds(monitor.getTimeoutSeconds()))
                     .build();
 
-            HttpRequest request = HttpRequest.newBuilder()
+            HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
                     .uri(URI.create(monitor.getUrl()))
                     .timeout(Duration.ofSeconds(monitor.getTimeoutSeconds()))
-                    .method(monitor.getMethod().name(), HttpRequest.BodyPublishers.noBody())
-                    .build();
+                    .method(monitor.getMethod().name(), HttpRequest.BodyPublishers.noBody());
+
+            monitor.getRequestHeaders().forEach(requestBuilder::header);
+
+            HttpRequest request = requestBuilder.build();
 
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
             boolean statusMatches = response.statusCode() == monitor.getExpectedStatusCode();
