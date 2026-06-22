@@ -1,4 +1,4 @@
-import type { CheckResult, Monitor, MonitorFormValues } from '../types/monitor'
+import type { CheckResult, DashboardSummary, Monitor, MonitorFormValues } from '../types/monitor'
 
 async function request<T>(url: string, options?: RequestInit) {
   const response = await fetch(url, {
@@ -62,4 +62,8 @@ export function fetchCheckResults(id: number) {
 
 export function fetchCheckResult(id: number) {
   return request<CheckResult>(`/api/check-results/${id}`)
+}
+
+export function fetchDashboardSummary() {
+  return request<DashboardSummary>('/api/dashboard/summary')
 }

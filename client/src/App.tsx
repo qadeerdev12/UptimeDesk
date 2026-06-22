@@ -6,6 +6,7 @@ import {
   createMonitor,
   deleteMonitor,
   fetchCheckResults,
+  fetchDashboardSummary,
   fetchMonitors,
   runMonitorCheck,
   updateMonitor,
@@ -24,7 +25,7 @@ import { MonitorDetailPanel } from './features/dashboard/MonitorDetailPanel'
 import { MonitorForm } from './features/dashboard/MonitorForm'
 import { MonitorTable } from './features/dashboard/MonitorTable'
 import { RecentResultsTable } from './features/dashboard/RecentResultsTable'
-import type { CheckResult, Monitor, MonitorFormValues } from './types/monitor'
+import type { CheckResult, DashboardSummary, Monitor, MonitorFormValues } from './types/monitor'
 import { formatTime } from './utils/date'
 
 function App() {
@@ -62,12 +63,20 @@ function App() {
     [backendUnavailable, checkResultsQuery.data],
   )
 
+  const dashboardSummaryQuery = useQuery({
+    queryKey: ['dashboard-summary'],
+    queryFn: fetchDashboardSummary,
+    enabled: !backendUnavailable,
+    retry: false,
+  })
+
   const createMonitorMutation = useMutation({
     mutationFn: createMonitor,
     onSuccess: (monitor) => {
       setCreateForm(emptyMonitorForm)
       setSelectedMonitorId(monitor.id)
       queryClient.invalidateQueries({ queryKey: ['monitors'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] })
     },
   })
 
@@ -77,6 +86,7 @@ function App() {
       setIsEditing(false)
       setSelectedMonitorId(monitor.id)
       queryClient.invalidateQueries({ queryKey: ['monitors'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] })
     },
   })
 
@@ -86,6 +96,7 @@ function App() {
       setSelectedMonitorId(null)
       setIsEditing(false)
       queryClient.invalidateQueries({ queryKey: ['monitors'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] })
     },
   })
 
@@ -93,6 +104,7 @@ function App() {
     mutationFn: runMonitorCheck,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['monitors'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] })
       if (selectedMonitor) {
         queryClient.invalidateQueries({ queryKey: ['check-results', selectedMonitor.id] })
       }
@@ -105,8 +117,8 @@ function App() {
   )
 
   const stats = useMemo(
-    () => calculateDashboardStats(monitors, checkResults),
-    [checkResults, monitors],
+    () => calculateDashboardStats(monitors, checkResults, dashboardSummaryQuery.data),
+    [checkResults, dashboardSummaryQuery.data, monitors],
   )
 
   const chartData = useMemo(() => buildLatencyChartData(checkResults), [checkResults])
@@ -158,10 +170,10 @@ function App() {
         )}
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <MetricCard icon={Activity} label="Monitors" value={stats.total.toString()} detail={`${stats.up} healthy`} />
-          <MetricCard icon={ShieldCheck} label="Uptime" value={`${stats.uptime}%`} detail="Current monitor health" />
-          <MetricCard icon={Gauge} label="Avg latency" value={`${stats.avgLatency} ms`} detail="Selected monitor" />
-          <MetricCard icon={AlertTriangle} label="Active incidents" value={stats.down.toString()} detail="Needs attention" danger={stats.down > 0} />
+          <MetricCard icon={Activity} label="Monitors" value={stats.total.toString()} detail={`${stats.active} active`} />
+          <MetricCard icon={ShieldCheck} label="Uptime" value={`${stats.uptime}%`} detail="Last 24 hours" />
+          <MetricCard icon={Gauge} label="Avg latency" value={`${stats.avgLatency} ms`} detail="Last 30 days" />
+          <MetricCard icon={AlertTriangle} label="Down monitors" value={stats.down.toString()} detail="Needs attention" danger={stats.down > 0} />
         </div>
 
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
@@ -251,10 +263,25 @@ function filterMonitors(monitors: Monitor[], searchTerm: string) {
   )
 }
 
-function calculateDashboardStats(monitors: Monitor[], checkResults: CheckResult[]) {
+function calculateDashboardStats(
+  monitors: Monitor[],
+  checkResults: CheckResult[],
+  dashboardSummary?: DashboardSummary,
+) {
+  if (dashboardSummary) {
+    return {
+      active: dashboardSummary.activeMonitors,
+      avgLatency: dashboardSummary.averageLatencyMs,
+      down: dashboardSummary.downMonitors,
+      total: dashboardSummary.totalMonitors,
+      uptime: dashboardSummary.uptime24h,
+    }
+  }
+
   const up = monitors.filter((monitor) => monitor.status === 'UP').length
   const down = monitors.filter((monitor) => monitor.status === 'DOWN').length
   const uptime = monitors.length === 0 ? 0 : Math.round((up / monitors.length) * 10000) / 100
+  const active = monitors.filter((monitor) => monitor.active).length
   const avgLatency =
     checkResults.length === 0
       ? 0
@@ -263,7 +290,7 @@ function calculateDashboardStats(monitors: Monitor[], checkResults: CheckResult[
             checkResults.length,
         )
 
-  return { total: monitors.length, up, down, uptime, avgLatency }
+  return { active, total: monitors.length, down, uptime, avgLatency }
 }
 
 function buildLatencyChartData(checkResults: CheckResult[]) {

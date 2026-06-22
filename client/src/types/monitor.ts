@@ -36,6 +36,28 @@ export type CheckResult = {
   errorMessage?: string
 }
 
+export type DashboardSummary = {
+  totalMonitors: number
+  activeMonitors: number
+  downMonitors: number
+  averageLatencyMs: number
+  uptime24h: number
+  uptime7d: number
+  uptime30d: number
+  latestFailedChecks: FailedCheckSummary[]
+}
+
+export type FailedCheckSummary = {
+  id: number
+  monitorId: number
+  monitorName: string
+  checkedAt: string
+  statusCode?: number
+  responseTimeMs: number
+  status: CheckStatus
+  errorMessage?: string
+}
+
 export type MonitorFormValues = {
   name: string
   url: string
