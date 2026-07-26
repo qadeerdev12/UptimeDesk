@@ -1,7 +1,11 @@
 package com.qadeer.uptimedesk.check;
 
 import com.qadeer.uptimedesk.incident.IncidentDecision;
+import com.qadeer.uptimedesk.incident.Incident;
+import com.qadeer.uptimedesk.incident.IncidentRepository;
 import com.qadeer.uptimedesk.incident.IncidentRuleEngine;
+import com.qadeer.uptimedesk.incident.IncidentStatus;
+import com.qadeer.uptimedesk.incident.IncidentTransition;
 import com.qadeer.uptimedesk.monitor.Monitor;
 import com.qadeer.uptimedesk.monitor.MonitorRepository;
 import com.qadeer.uptimedesk.monitor.MonitorStatus;
@@ -14,17 +18,20 @@ import java.time.Instant;
 public class MonitorCheckService {
 
     private final CheckResultRepository checkResultRepository;
+    private final IncidentRepository incidentRepository;
     private final MonitorRepository monitorRepository;
     private final EndpointCheckClient endpointCheckClient;
     private final IncidentRuleEngine incidentRuleEngine;
 
     public MonitorCheckService(
             CheckResultRepository checkResultRepository,
+            IncidentRepository incidentRepository,
             MonitorRepository monitorRepository,
             EndpointCheckClient endpointCheckClient,
             IncidentRuleEngine incidentRuleEngine
     ) {
         this.checkResultRepository = checkResultRepository;
+        this.incidentRepository = incidentRepository;
         this.monitorRepository = monitorRepository;
         this.endpointCheckClient = endpointCheckClient;
         this.incidentRuleEngine = incidentRuleEngine;
@@ -66,7 +73,30 @@ public class MonitorCheckService {
         result.setResponseTimeMs(Duration.ofNanos(System.nanoTime() - startedAt).toMillis());
         monitor.setLastCheckedAt(Instant.now());
         monitorRepository.save(monitor);
+        CheckResult savedResult = checkResultRepository.save(result);
 
-        return checkResultRepository.save(result);
+        if (incidentDecision.transition() == IncidentTransition.OPEN_INCIDENT) {
+            openIncidentIfNeeded(monitor, savedResult, incidentDecision.reason());
+        }
+
+        return savedResult;
+    }
+
+    private void openIncidentIfNeeded(Monitor monitor, CheckResult checkResult, String reason) {
+        boolean activeIncidentExists = incidentRepository.findFirstByMonitorIdAndStatusInOrderByOpenedAtDesc(
+                monitor.getId(),
+                java.util.List.of(IncidentStatus.OPEN, IncidentStatus.ACKNOWLEDGED)
+        ).isPresent();
+
+        if (activeIncidentExists) {
+            return;
+        }
+
+        Incident incident = new Incident();
+        incident.setMonitor(monitor);
+        incident.setOpenedByCheckResult(checkResult);
+        incident.setOpeningReason(reason);
+
+        incidentRepository.save(incident);
     }
 }
