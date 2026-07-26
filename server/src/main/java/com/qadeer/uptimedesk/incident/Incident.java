@@ -35,10 +35,14 @@ public class Incident {
     @ManyToOne(fetch = FetchType.LAZY)
     private CheckResult resolvedByCheckResult;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    private CheckResult latestCheckResult;
+
     @Enumerated(EnumType.STRING)
     private IncidentStatus status = IncidentStatus.OPEN;
 
     private Instant openedAt = Instant.now();
+    private Instant lastCheckedAt = Instant.now();
     private Instant acknowledgedAt;
     private Instant resolvedAt;
     private String openingReason;

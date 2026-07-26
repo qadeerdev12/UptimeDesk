@@ -133,4 +133,39 @@ class MonitorCheckServiceTest {
         assertThat(result.getIncidentTransition()).isEqualTo(IncidentTransition.OPEN_INCIDENT);
         verify(incidentRepository, never()).save(any(Incident.class));
     }
+
+    @Test
+    void keepsActiveIncidentOpenWhileMonitorRemainsDown() {
+        Monitor monitor = new Monitor();
+        monitor.setId(42L);
+        monitor.setFailureThreshold(2);
+        monitor.setConsecutiveFailures(2);
+        monitor.setStatus(MonitorStatus.DOWN);
+
+        Incident existingIncident = new Incident();
+        existingIncident.setStatus(IncidentStatus.OPEN);
+
+        when(endpointCheckClient.check(monitor)).thenReturn(EndpointCheck.failure(500, "Server error"));
+        when(checkResultRepository.save(any(CheckResult.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(incidentRepository.findFirstByMonitorIdAndStatusInOrderByOpenedAtDesc(
+                eq(monitor.getId()),
+                eq(List.of(IncidentStatus.OPEN, IncidentStatus.ACKNOWLEDGED))
+        )).thenReturn(Optional.of(existingIncident));
+
+        MonitorCheckService service = new MonitorCheckService(
+                checkResultRepository,
+                incidentRepository,
+                monitorRepository,
+                endpointCheckClient,
+                new IncidentRuleEngine()
+        );
+
+        CheckResult result = service.check(monitor);
+
+        assertThat(result.getIncidentTransition()).isEqualTo(IncidentTransition.NONE);
+        assertThat(existingIncident.getStatus()).isEqualTo(IncidentStatus.OPEN);
+        assertThat(existingIncident.getLatestCheckResult()).isEqualTo(result);
+        assertThat(existingIncident.getLastCheckedAt()).isEqualTo(result.getCheckedAt());
+        verify(incidentRepository).save(existingIncident);
+    }
 }

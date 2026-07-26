@@ -35,6 +35,8 @@ class IncidentRepositoryIntegrationTest {
         Incident incident = new Incident();
         incident.setMonitor(monitor);
         incident.setOpenedByCheckResult(failedCheck);
+        incident.setLatestCheckResult(failedCheck);
+        incident.setLastCheckedAt(failedCheck.getCheckedAt());
         incident.setOpeningReason("Monitor reached 2 consecutive failures; threshold is 2.");
         incidentRepository.save(incident);
 
@@ -48,6 +50,8 @@ class IncidentRepositoryIntegrationTest {
                     assertThat(savedIncident.getStatus()).isEqualTo(IncidentStatus.OPEN);
                     assertThat(savedIncident.getMonitor().getId()).isEqualTo(monitor.getId());
                     assertThat(savedIncident.getOpenedByCheckResult().getId()).isEqualTo(failedCheck.getId());
+                    assertThat(savedIncident.getLatestCheckResult().getId()).isEqualTo(failedCheck.getId());
+                    assertThat(savedIncident.getLastCheckedAt()).isEqualTo(failedCheck.getCheckedAt());
                     assertThat(savedIncident.getOpeningReason()).contains("threshold is 2");
                 });
     }

@@ -77,6 +77,8 @@ public class MonitorCheckService {
 
         if (incidentDecision.transition() == IncidentTransition.OPEN_INCIDENT) {
             openIncidentIfNeeded(monitor, savedResult, incidentDecision.reason());
+        } else if (result.getStatus() == CheckStatus.FAILURE && monitor.getStatus() == MonitorStatus.DOWN) {
+            keepActiveIncidentOpen(monitor, savedResult);
         }
 
         return savedResult;
@@ -95,8 +97,22 @@ public class MonitorCheckService {
         Incident incident = new Incident();
         incident.setMonitor(monitor);
         incident.setOpenedByCheckResult(checkResult);
+        incident.setLatestCheckResult(checkResult);
+        incident.setLastCheckedAt(checkResult.getCheckedAt());
         incident.setOpeningReason(reason);
 
         incidentRepository.save(incident);
+    }
+
+    private void keepActiveIncidentOpen(Monitor monitor, CheckResult checkResult) {
+        incidentRepository.findFirstByMonitorIdAndStatusInOrderByOpenedAtDesc(
+                        monitor.getId(),
+                        java.util.List.of(IncidentStatus.OPEN, IncidentStatus.ACKNOWLEDGED)
+                )
+                .ifPresent(incident -> {
+                    incident.setLatestCheckResult(checkResult);
+                    incident.setLastCheckedAt(checkResult.getCheckedAt());
+                    incidentRepository.save(incident);
+                });
     }
 }
