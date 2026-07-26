@@ -16,6 +16,7 @@ import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -36,6 +37,21 @@ class IncidentControllerIntegrationTest {
 
     @Autowired
     private MonitorRepository monitorRepository;
+
+    @Test
+    void listsActiveIncidents() throws Exception {
+        Incident openIncident = incidentRepository.save(openIncident());
+        Incident resolvedIncident = openIncident();
+        resolvedIncident.setStatus(IncidentStatus.RESOLVED);
+        resolvedIncident.setResolvedAt(Instant.now());
+        incidentRepository.save(resolvedIncident);
+
+        mockMvc.perform(get("/api/incidents/active"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(openIncident.getId()))
+                .andExpect(jsonPath("$[0].status").value("OPEN"))
+                .andExpect(jsonPath("$.length()").value(1));
+    }
 
     @Test
     void acknowledgesOpenIncident() throws Exception {

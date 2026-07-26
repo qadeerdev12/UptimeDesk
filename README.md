@@ -161,7 +161,9 @@ POST   /api/monitors/{id}/run
 GET    /api/monitors/{id}/results
 GET    /api/check-results/{id}
 GET    /api/dashboard/summary
+GET    /api/incidents/active
 POST   /api/incidents/{id}/acknowledge
+GET    /api/monitors/{id}/incidents
 ```
 
 Example monitor creation:

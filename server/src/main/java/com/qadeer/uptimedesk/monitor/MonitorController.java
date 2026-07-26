@@ -3,6 +3,8 @@ package com.qadeer.uptimedesk.monitor;
 import com.qadeer.uptimedesk.check.CheckResultResponse;
 import com.qadeer.uptimedesk.check.CheckResultRepository;
 import com.qadeer.uptimedesk.check.MonitorCheckService;
+import com.qadeer.uptimedesk.incident.IncidentResponse;
+import com.qadeer.uptimedesk.incident.IncidentService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -25,15 +27,18 @@ public class MonitorController {
 
     private final MonitorRepository monitorRepository;
     private final CheckResultRepository checkResultRepository;
+    private final IncidentService incidentService;
     private final MonitorCheckService monitorCheckService;
 
     public MonitorController(
             MonitorRepository monitorRepository,
             CheckResultRepository checkResultRepository,
+            IncidentService incidentService,
             MonitorCheckService monitorCheckService
     ) {
         this.monitorRepository = monitorRepository;
         this.checkResultRepository = checkResultRepository;
+        this.incidentService = incidentService;
         this.monitorCheckService = monitorCheckService;
     }
 
@@ -91,6 +96,13 @@ public class MonitorController {
                 .stream()
                 .map(CheckResultResponse::from)
                 .toList();
+    }
+
+    @GetMapping("/{id}/incidents")
+    List<IncidentResponse> listIncidents(@PathVariable Long id) {
+        findMonitor(id);
+
+        return incidentService.listMonitorIncidents(id);
     }
 
     @PostMapping("/{id}/run")

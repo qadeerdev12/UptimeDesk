@@ -1,5 +1,11 @@
 package com.qadeer.uptimedesk.monitor;
 
+import com.qadeer.uptimedesk.check.CheckResult;
+import com.qadeer.uptimedesk.check.CheckResultRepository;
+import com.qadeer.uptimedesk.check.CheckStatus;
+import com.qadeer.uptimedesk.incident.Incident;
+import com.qadeer.uptimedesk.incident.IncidentRepository;
+import com.qadeer.uptimedesk.incident.IncidentStatus;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -23,6 +29,15 @@ class MonitorControllerIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private CheckResultRepository checkResultRepository;
+
+    @Autowired
+    private IncidentRepository incidentRepository;
+
+    @Autowired
+    private MonitorRepository monitorRepository;
 
     @Test
     void createsReadsUpdatesAndDeletesMonitor() throws Exception {
@@ -130,5 +145,36 @@ class MonitorControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].name").value("Kanban API"));
+    }
+
+    @Test
+    void listsMonitorIncidentHistory() throws Exception {
+        Monitor monitor = new Monitor();
+        monitor.setName("Portfolio API");
+        monitor.setUrl("https://example.com/health");
+        Monitor savedMonitor = monitorRepository.save(monitor);
+
+        CheckResult failedCheck = new CheckResult();
+        failedCheck.setMonitor(savedMonitor);
+        failedCheck.setStatus(CheckStatus.FAILURE);
+        failedCheck.setStatusCode(500);
+        failedCheck.setResponseTimeMs(250);
+        CheckResult savedCheck = checkResultRepository.save(failedCheck);
+
+        Incident incident = new Incident();
+        incident.setMonitor(savedMonitor);
+        incident.setOpenedByCheckResult(savedCheck);
+        incident.setLatestCheckResult(savedCheck);
+        incident.setLastCheckedAt(savedCheck.getCheckedAt());
+        incident.setStatus(IncidentStatus.OPEN);
+        incident.setOpeningReason("Monitor reached 2 consecutive failures; threshold is 2.");
+        Incident savedIncident = incidentRepository.save(incident);
+
+        mockMvc.perform(get("/api/monitors/{id}/incidents", savedMonitor.getId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(savedIncident.getId()))
+                .andExpect(jsonPath("$[0].monitorId").value(savedMonitor.getId()))
+                .andExpect(jsonPath("$[0].openedByCheckResultId").value(savedCheck.getId()))
+                .andExpect(jsonPath("$[0].status").value("OPEN"));
     }
 }

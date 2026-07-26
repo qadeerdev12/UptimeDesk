@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
+import java.util.List;
 
 @Service
 public class IncidentService {
@@ -14,6 +15,24 @@ public class IncidentService {
     public IncidentService(Clock clock, IncidentRepository incidentRepository) {
         this.clock = clock;
         this.incidentRepository = incidentRepository;
+    }
+
+    @Transactional(readOnly = true)
+    public List<IncidentResponse> listActiveIncidents() {
+        return incidentRepository.findByStatusInOrderByOpenedAtDesc(
+                        List.of(IncidentStatus.OPEN, IncidentStatus.ACKNOWLEDGED)
+                )
+                .stream()
+                .map(IncidentResponse::from)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<IncidentResponse> listMonitorIncidents(Long monitorId) {
+        return incidentRepository.findTop20ByMonitorIdOrderByOpenedAtDesc(monitorId)
+                .stream()
+                .map(IncidentResponse::from)
+                .toList();
     }
 
     @Transactional
