@@ -82,12 +82,20 @@ class MonitorCheckServiceTest {
     @Test
     void successfulCheckResetsFailureCountAndMarksMonitorUp() {
         Monitor monitor = new Monitor();
+        monitor.setId(42L);
         monitor.setFailureThreshold(2);
         monitor.setConsecutiveFailures(1);
         monitor.setStatus(MonitorStatus.DOWN);
 
+        Incident existingIncident = new Incident();
+        existingIncident.setStatus(IncidentStatus.OPEN);
+
         when(endpointCheckClient.check(monitor)).thenReturn(EndpointCheck.success(200));
         when(checkResultRepository.save(any(CheckResult.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(incidentRepository.findFirstByMonitorIdAndStatusInOrderByOpenedAtDesc(
+                eq(monitor.getId()),
+                eq(List.of(IncidentStatus.OPEN, IncidentStatus.ACKNOWLEDGED))
+        )).thenReturn(Optional.of(existingIncident));
 
         MonitorCheckService service = new MonitorCheckService(
                 checkResultRepository,
@@ -104,6 +112,12 @@ class MonitorCheckServiceTest {
         assertThat(result.getIncidentReason()).contains("recovered");
         assertThat(monitor.getConsecutiveFailures()).isZero();
         assertThat(monitor.getStatus()).isEqualTo(MonitorStatus.UP);
+        assertThat(existingIncident.getStatus()).isEqualTo(IncidentStatus.RESOLVED);
+        assertThat(existingIncident.getResolvedByCheckResult()).isEqualTo(result);
+        assertThat(existingIncident.getLatestCheckResult()).isEqualTo(result);
+        assertThat(existingIncident.getResolvedAt()).isEqualTo(result.getCheckedAt());
+        assertThat(existingIncident.getResolutionReason()).contains("recovered");
+        verify(incidentRepository).save(existingIncident);
     }
 
     @Test
