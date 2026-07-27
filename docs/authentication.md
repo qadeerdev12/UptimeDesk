@@ -58,8 +58,9 @@ Public local/system endpoints remain available without auth:
 
 ## Frontend Implementation Plan
 
-- Add Supabase client configuration through Vite environment variables.
-- Add login, register, and logout screens/actions.
+- Add Supabase client configuration through Vite environment variables. Completed.
+- Add login and register screens/actions. Completed.
+- Add logout action.
 - Store the active Supabase session through Supabase client helpers.
 - Attach the access token to API requests.
 - Hide the dashboard until the user is authenticated.

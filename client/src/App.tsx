@@ -13,6 +13,7 @@ import {
   runMonitorCheck,
   updateMonitor,
 } from './api/monitors'
+import { useAuth } from './auth/AuthContext'
 import { AppShell } from './components/layout/AppShell'
 import { MetricCard } from './components/ui/MetricCard'
 import { StateBanner } from './components/ui/StateBanner'
@@ -23,6 +24,7 @@ import {
   toFormValues,
 } from './data/monitorDefaults'
 import { ActiveIncidentsPanel } from './features/dashboard/ActiveIncidentsPanel'
+import { AuthPage } from './features/auth/AuthPage'
 import { IncidentDetailPanel } from './features/dashboard/IncidentDetailPanel'
 import { LatencyChart } from './features/dashboard/LatencyChart'
 import type { LatencyRange } from './features/dashboard/LatencyChart'
@@ -34,6 +36,7 @@ import type { CheckResult, DashboardSummary, Incident, Monitor, MonitorFormValue
 import { formatTime } from './utils/date'
 
 function App() {
+  const { isLoading: isAuthLoading, user } = useAuth()
   const queryClient = useQueryClient()
   const [createForm, setCreateForm] = useState<MonitorFormValues>(emptyMonitorForm)
   const [editForm, setEditForm] = useState<MonitorFormValues>(emptyMonitorForm)
@@ -46,6 +49,7 @@ function App() {
   const monitorsQuery = useQuery({
     queryKey: ['monitors'],
     queryFn: fetchMonitors,
+    enabled: Boolean(user),
     retry: false,
   })
 
@@ -61,7 +65,7 @@ function App() {
   const checkResultsQuery = useQuery({
     queryKey: ['check-results', selectedMonitor?.id],
     queryFn: () => fetchCheckResults(selectedMonitor.id),
-    enabled: Boolean(selectedMonitor && !backendUnavailable),
+    enabled: Boolean(user && selectedMonitor && !backendUnavailable),
     retry: false,
   })
 
@@ -73,21 +77,21 @@ function App() {
   const dashboardSummaryQuery = useQuery({
     queryKey: ['dashboard-summary'],
     queryFn: fetchDashboardSummary,
-    enabled: !backendUnavailable,
+    enabled: Boolean(user && !backendUnavailable),
     retry: false,
   })
 
   const activeIncidentsQuery = useQuery({
     queryKey: ['active-incidents'],
     queryFn: fetchActiveIncidents,
-    enabled: !backendUnavailable,
+    enabled: Boolean(user && !backendUnavailable),
     retry: false,
   })
 
   const incidentDetailQuery = useQuery({
     queryKey: ['incident-detail', selectedIncidentId],
     queryFn: () => fetchIncident(selectedIncidentId as number),
-    enabled: Boolean(selectedIncidentId && !backendUnavailable),
+    enabled: Boolean(user && selectedIncidentId && !backendUnavailable),
     retry: false,
   })
 
@@ -175,6 +179,21 @@ function App() {
 
   function handleSelectIncident(incident: Incident) {
     setSelectedIncidentId(incident.id)
+  }
+
+  if (isAuthLoading) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-slate-50 text-slate-600">
+        <div className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm shadow-sm">
+          <Loader2 className="animate-spin" size={16} />
+          Checking your session.
+        </div>
+      </main>
+    )
+  }
+
+  if (!user) {
+    return <AuthPage />
   }
 
   return (

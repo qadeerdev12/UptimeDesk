@@ -24,6 +24,8 @@ Implemented:
 - Store check results with status code, latency, timestamp, and error details
 - Record incident-rule outcomes when checks would open or resolve an incident
 - Track active incidents with detail views and timeline events
+- Authenticate users with Supabase login and registration UI
+- Protect monitor APIs and scope monitors to the authenticated user
 - View monitor status, configuration, and recent check results
 - Search monitored services
 - Display dashboard metrics and latency chart from collected check results
@@ -33,7 +35,6 @@ Implemented:
 Planned:
 
 - Email alerts for outages and recoveries
-- Authentication and user-owned monitors
 - Supabase PostgreSQL production database
 - Public status pages
 - Vercel frontend deployment
@@ -41,7 +42,7 @@ Planned:
 
 ## Authentication Direction
 
-Sprint 6 will use Supabase Auth on the frontend and Spring Boot JWT validation on the backend. The API will use the authenticated Supabase user id as the ownership key so each user can only access their own monitors, check results, and incidents.
+Sprint 6 uses Supabase Auth on the frontend and Spring Boot JWT validation on the backend. The API uses the authenticated Supabase user id as the ownership key so each user can only access their own monitor records.
 
 ## Use Cases
 
