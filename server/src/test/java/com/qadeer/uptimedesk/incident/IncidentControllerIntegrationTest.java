@@ -65,7 +65,11 @@ class IncidentControllerIntegrationTest {
                 .andExpect(jsonPath("$.openedByCheckResultId").value(incident.getOpenedByCheckResult().getId()))
                 .andExpect(jsonPath("$.latestCheckResultId").value(incident.getLatestCheckResult().getId()))
                 .andExpect(jsonPath("$.status").value("OPEN"))
-                .andExpect(jsonPath("$.openingReason").value("Monitor reached 2 consecutive failures; threshold is 2."));
+                .andExpect(jsonPath("$.openingReason").value("Monitor reached 2 consecutive failures; threshold is 2."))
+                .andExpect(jsonPath("$.timelineEvents[0].type").value("OPENED"))
+                .andExpect(jsonPath("$.timelineEvents[0].checkResultId").value(incident.getOpenedByCheckResult().getId()))
+                .andExpect(jsonPath("$.timelineEvents[1].type").value("LATEST_CHECK"))
+                .andExpect(jsonPath("$.timelineEvents[1].checkResultId").value(incident.getLatestCheckResult().getId()));
     }
 
     @Test

@@ -23,6 +23,7 @@ Implemented:
 - Run scheduled backend checks
 - Store check results with status code, latency, timestamp, and error details
 - Record incident-rule outcomes when checks would open or resolve an incident
+- Track active incidents with detail views and timeline events
 - View monitor status, configuration, and recent check results
 - Search monitored services
 - Display dashboard metrics and latency chart from collected check results
@@ -31,8 +32,6 @@ Implemented:
 
 Planned:
 
-- Uptime analytics for 24h, 7d, and 30d windows
-- Incident tracking and incident timelines
 - Email alerts for outages and recoveries
 - Authentication and user-owned monitors
 - Supabase PostgreSQL production database

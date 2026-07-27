@@ -8,6 +8,8 @@ export type IncidentTransition = 'NONE' | 'OPEN_INCIDENT' | 'RESOLVE_INCIDENT'
 
 export type IncidentStatus = 'OPEN' | 'ACKNOWLEDGED' | 'RESOLVED'
 
+export type IncidentTimelineEventType = 'OPENED' | 'ACKNOWLEDGED' | 'LATEST_CHECK' | 'RESOLVED'
+
 export type Monitor = {
   id: number
   name: string
@@ -63,6 +65,15 @@ export type Incident = {
   resolvedAt?: string
   openingReason?: string
   resolutionReason?: string
+  timelineEvents: IncidentTimelineEvent[]
+}
+
+export type IncidentTimelineEvent = {
+  type: IncidentTimelineEventType
+  label: string
+  occurredAt: string
+  checkResultId?: number
+  message?: string
 }
 
 export type FailedCheckSummary = {

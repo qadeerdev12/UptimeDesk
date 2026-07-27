@@ -1,9 +1,9 @@
-import { Clock3, FileText, Loader2 } from 'lucide-react'
+import { BellRing, CheckCircle2, Clock3, FileText, Loader2, RadioTower } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { DetailItem } from '../../components/ui/DetailItem'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { StateBanner } from '../../components/ui/StateBanner'
-import type { Incident } from '../../types/monitor'
+import type { Incident, IncidentTimelineEvent } from '../../types/monitor'
 import { formatDateTime } from '../../utils/date'
 import { IncidentStatusBadge } from './ActiveIncidentsPanel'
 
@@ -75,6 +75,8 @@ export function IncidentDetailPanel({
               value={incident.resolutionReason ?? 'Incident has not been resolved yet.'}
             />
           </div>
+
+          <IncidentTimeline events={incident.timelineEvents ?? []} />
         </div>
       ) : (
         <EmptyState
@@ -84,6 +86,64 @@ export function IncidentDetailPanel({
       )}
     </section>
   )
+}
+
+function IncidentTimeline({ events }: { events: IncidentTimelineEvent[] }) {
+  if (events.length === 0) {
+    return (
+      <div className="rounded-md border border-slate-200 p-4">
+        <p className="font-semibold text-slate-950">Timeline</p>
+        <p className="mt-1 text-sm text-slate-500">No timeline events have been recorded yet.</p>
+      </div>
+    )
+  }
+
+  return (
+    <div>
+      <p className="font-semibold text-slate-950">Timeline</p>
+      <div className="mt-4 space-y-4">
+        {events.map((event, index) => (
+          <div className="relative flex gap-3" key={`${event.type}-${event.occurredAt}-${index}`}>
+            <div className="flex flex-col items-center">
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-600">
+                {timelineIcon(event.type)}
+              </span>
+              {index < events.length - 1 && <span className="mt-2 h-full w-px flex-1 bg-slate-200" />}
+            </div>
+
+            <div className="min-w-0 pb-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="font-medium text-slate-900">{event.label}</p>
+                {event.checkResultId && (
+                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-500">
+                    Check #{event.checkResultId}
+                  </span>
+                )}
+              </div>
+              <p className="mt-1 text-xs text-slate-500">{formatDateTime(event.occurredAt)}</p>
+              {event.message && <p className="mt-2 text-sm text-slate-600">{event.message}</p>}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function timelineIcon(type: IncidentTimelineEvent['type']) {
+  if (type === 'ACKNOWLEDGED') {
+    return <BellRing size={15} />
+  }
+
+  if (type === 'RESOLVED') {
+    return <CheckCircle2 size={15} />
+  }
+
+  if (type === 'LATEST_CHECK') {
+    return <RadioTower size={15} />
+  }
+
+  return <Clock3 size={15} />
 }
 
 function ReasonBlock({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
