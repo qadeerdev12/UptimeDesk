@@ -19,6 +19,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -40,6 +41,12 @@ class MonitorControllerIntegrationTest {
     private MonitorRepository monitorRepository;
 
     @Test
+    void rejectsUnauthenticatedMonitorRequests() throws Exception {
+        mockMvc.perform(get("/api/monitors"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
     void createsReadsUpdatesAndDeletesMonitor() throws Exception {
         String createPayload = """
                 {
@@ -53,6 +60,7 @@ class MonitorControllerIntegrationTest {
                 """;
 
         int monitorId = mockMvc.perform(post("/api/monitors")
+                        .with(jwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(createPayload))
                 .andExpect(status().isCreated())
@@ -65,7 +73,8 @@ class MonitorControllerIntegrationTest {
                 .replaceAll(".*\"id\":(\\d+).*", "$1")
                 .transform(Integer::parseInt);
 
-        mockMvc.perform(get("/api/monitors/{id}", monitorId))
+        mockMvc.perform(get("/api/monitors/{id}", monitorId)
+                        .with(jwt()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(monitorId))
                 .andExpect(jsonPath("$.name").value("Portfolio API"));
@@ -88,6 +97,7 @@ class MonitorControllerIntegrationTest {
                 """;
 
         mockMvc.perform(put("/api/monitors/{id}", monitorId)
+                        .with(jwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(updatePayload))
                 .andExpect(status().isOk())
@@ -97,10 +107,12 @@ class MonitorControllerIntegrationTest {
                 .andExpect(jsonPath("$.requestHeaders.X-Health-Check").value("uptimedesk"))
                 .andExpect(jsonPath("$.active").value(false));
 
-        mockMvc.perform(delete("/api/monitors/{id}", monitorId))
+        mockMvc.perform(delete("/api/monitors/{id}", monitorId)
+                        .with(jwt()))
                 .andExpect(status().isNoContent());
 
-        mockMvc.perform(get("/api/monitors/{id}", monitorId))
+        mockMvc.perform(get("/api/monitors/{id}", monitorId)
+                        .with(jwt()))
                 .andExpect(status().isNotFound());
     }
 
@@ -118,6 +130,7 @@ class MonitorControllerIntegrationTest {
                 """;
 
         mockMvc.perform(post("/api/monitors")
+                        .with(jwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(invalidPayload))
                 .andExpect(status().isBadRequest());
@@ -137,11 +150,13 @@ class MonitorControllerIntegrationTest {
                 """;
 
         mockMvc.perform(post("/api/monitors")
+                        .with(jwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(createPayload))
                 .andExpect(status().isCreated());
 
-        mockMvc.perform(get("/api/monitors"))
+        mockMvc.perform(get("/api/monitors")
+                        .with(jwt()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].name").value("Kanban API"));
@@ -170,7 +185,8 @@ class MonitorControllerIntegrationTest {
         incident.setOpeningReason("Monitor reached 2 consecutive failures; threshold is 2.");
         Incident savedIncident = incidentRepository.save(incident);
 
-        mockMvc.perform(get("/api/monitors/{id}/incidents", savedMonitor.getId()))
+        mockMvc.perform(get("/api/monitors/{id}/incidents", savedMonitor.getId())
+                        .with(jwt()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(savedIncident.getId()))
                 .andExpect(jsonPath("$[0].monitorId").value(savedMonitor.getId()))

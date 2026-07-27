@@ -170,6 +170,8 @@ POST   /api/incidents/{id}/acknowledge
 GET    /api/monitors/{id}/incidents
 ```
 
+The `/api/monitors/**` endpoints are protected by Spring Security and expect a bearer token.
+
 Example monitor creation:
 
 ```bash

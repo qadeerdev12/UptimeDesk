@@ -32,12 +32,29 @@ API queries and writes data only for that owner identity
 
 ## Backend Implementation Plan
 
-- Add Spring Security OAuth2 resource server support.
+- Add Spring Security OAuth2 resource server support. Completed.
+- Protect monitor APIs. Completed.
 - Configure JWT issuer/JWK settings through environment variables.
 - Create an external auth identity model for the Supabase user id.
-- Protect monitor APIs.
 - Filter monitors by authenticated owner.
 - Extend related check result and incident access through monitor ownership.
+
+## Protected Endpoints
+
+The monitor API now requires an authenticated bearer token:
+
+```text
+/api/monitors/**
+```
+
+Public local/system endpoints remain available without auth:
+
+```text
+/api/health
+/actuator/health
+/actuator/info
+/h2-console/**
+```
 
 ## Frontend Implementation Plan
 
