@@ -1,5 +1,7 @@
 package com.qadeer.uptimedesk.monitor;
 
+import com.qadeer.uptimedesk.auth.UserIdentity;
+import com.qadeer.uptimedesk.auth.UserIdentityRepository;
 import com.qadeer.uptimedesk.check.CheckResult;
 import com.qadeer.uptimedesk.check.CheckResultRepository;
 import com.qadeer.uptimedesk.check.CheckStatus;
@@ -40,6 +42,9 @@ class MonitorControllerIntegrationTest {
     @Autowired
     private MonitorRepository monitorRepository;
 
+    @Autowired
+    private UserIdentityRepository userIdentityRepository;
+
     @Test
     void rejectsUnauthenticatedMonitorRequests() throws Exception {
         mockMvc.perform(get("/api/monitors"))
@@ -60,7 +65,7 @@ class MonitorControllerIntegrationTest {
                 """;
 
         int monitorId = mockMvc.perform(post("/api/monitors")
-                        .with(jwt())
+                        .with(jwtFor("supabase-user-1", "qadeer@example.com"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(createPayload))
                 .andExpect(status().isCreated())
@@ -74,7 +79,7 @@ class MonitorControllerIntegrationTest {
                 .transform(Integer::parseInt);
 
         mockMvc.perform(get("/api/monitors/{id}", monitorId)
-                        .with(jwt()))
+                        .with(jwtFor("supabase-user-1", "qadeer@example.com")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(monitorId))
                 .andExpect(jsonPath("$.name").value("Portfolio API"));
@@ -97,7 +102,7 @@ class MonitorControllerIntegrationTest {
                 """;
 
         mockMvc.perform(put("/api/monitors/{id}", monitorId)
-                        .with(jwt())
+                        .with(jwtFor("supabase-user-1", "qadeer@example.com"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(updatePayload))
                 .andExpect(status().isOk())
@@ -108,11 +113,11 @@ class MonitorControllerIntegrationTest {
                 .andExpect(jsonPath("$.active").value(false));
 
         mockMvc.perform(delete("/api/monitors/{id}", monitorId)
-                        .with(jwt()))
+                        .with(jwtFor("supabase-user-1", "qadeer@example.com")))
                 .andExpect(status().isNoContent());
 
         mockMvc.perform(get("/api/monitors/{id}", monitorId)
-                        .with(jwt()))
+                        .with(jwtFor("supabase-user-1", "qadeer@example.com")))
                 .andExpect(status().isNotFound());
     }
 
@@ -137,6 +142,25 @@ class MonitorControllerIntegrationTest {
     }
 
     @Test
+    void hidesMonitorsOwnedByOtherUsers() throws Exception {
+        UserIdentity owner = userIdentity("owner-user", "owner@example.com");
+        Monitor monitor = new Monitor();
+        monitor.setOwner(owner);
+        monitor.setName("Private API");
+        monitor.setUrl("https://example.com/private");
+        Monitor savedMonitor = monitorRepository.save(monitor);
+
+        mockMvc.perform(get("/api/monitors")
+                        .with(jwtFor("other-user", "other@example.com")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
+
+        mockMvc.perform(get("/api/monitors/{id}", savedMonitor.getId())
+                        .with(jwtFor("other-user", "other@example.com")))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
     void listsMonitorsAsResponses() throws Exception {
         String createPayload = """
                 {
@@ -150,13 +174,13 @@ class MonitorControllerIntegrationTest {
                 """;
 
         mockMvc.perform(post("/api/monitors")
-                        .with(jwt())
+                        .with(jwtFor("supabase-user-1", "qadeer@example.com"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(createPayload))
                 .andExpect(status().isCreated());
 
         mockMvc.perform(get("/api/monitors")
-                        .with(jwt()))
+                        .with(jwtFor("supabase-user-1", "qadeer@example.com")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].name").value("Kanban API"));
@@ -165,6 +189,7 @@ class MonitorControllerIntegrationTest {
     @Test
     void listsMonitorIncidentHistory() throws Exception {
         Monitor monitor = new Monitor();
+        monitor.setOwner(userIdentity("supabase-user-1", "qadeer@example.com"));
         monitor.setName("Portfolio API");
         monitor.setUrl("https://example.com/health");
         Monitor savedMonitor = monitorRepository.save(monitor);
@@ -186,11 +211,26 @@ class MonitorControllerIntegrationTest {
         Incident savedIncident = incidentRepository.save(incident);
 
         mockMvc.perform(get("/api/monitors/{id}/incidents", savedMonitor.getId())
-                        .with(jwt()))
+                        .with(jwtFor("supabase-user-1", "qadeer@example.com")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(savedIncident.getId()))
                 .andExpect(jsonPath("$[0].monitorId").value(savedMonitor.getId()))
                 .andExpect(jsonPath("$[0].openedByCheckResultId").value(savedCheck.getId()))
                 .andExpect(jsonPath("$[0].status").value("OPEN"));
+    }
+
+    private UserIdentity userIdentity(String externalSubject, String email) {
+        UserIdentity identity = new UserIdentity();
+        identity.setExternalSubject(externalSubject);
+        identity.setEmail(email);
+
+        return userIdentityRepository.save(identity);
+    }
+
+    private static org.springframework.test.web.servlet.request.RequestPostProcessor jwtFor(
+            String subject,
+            String email
+    ) {
+        return jwt().jwt(jwt -> jwt.subject(subject).claim("email", email));
     }
 }

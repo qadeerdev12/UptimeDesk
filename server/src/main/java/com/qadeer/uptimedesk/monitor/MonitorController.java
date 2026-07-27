@@ -1,5 +1,7 @@
 package com.qadeer.uptimedesk.monitor;
 
+import com.qadeer.uptimedesk.auth.UserIdentity;
+import com.qadeer.uptimedesk.auth.UserIdentityService;
 import com.qadeer.uptimedesk.check.CheckResultResponse;
 import com.qadeer.uptimedesk.check.CheckResultRepository;
 import com.qadeer.uptimedesk.check.MonitorCheckService;
@@ -7,6 +9,8 @@ import com.qadeer.uptimedesk.incident.IncidentResponse;
 import com.qadeer.uptimedesk.incident.IncidentService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -29,44 +33,52 @@ public class MonitorController {
     private final CheckResultRepository checkResultRepository;
     private final IncidentService incidentService;
     private final MonitorCheckService monitorCheckService;
+    private final UserIdentityService userIdentityService;
 
     public MonitorController(
             MonitorRepository monitorRepository,
             CheckResultRepository checkResultRepository,
             IncidentService incidentService,
-            MonitorCheckService monitorCheckService
+            MonitorCheckService monitorCheckService,
+            UserIdentityService userIdentityService
     ) {
         this.monitorRepository = monitorRepository;
         this.checkResultRepository = checkResultRepository;
         this.incidentService = incidentService;
         this.monitorCheckService = monitorCheckService;
+        this.userIdentityService = userIdentityService;
     }
 
     @GetMapping
-    List<MonitorResponse> listMonitors() {
-        return monitorRepository.findAll()
+    List<MonitorResponse> listMonitors(Authentication authentication) {
+        return monitorRepository.findByOwnerExternalSubject(authentication.getName())
                 .stream()
                 .map(MonitorResponse::from)
                 .toList();
     }
 
     @GetMapping("/{id}")
-    MonitorResponse getMonitor(@PathVariable Long id) {
-        return MonitorResponse.from(findMonitor(id));
+    MonitorResponse getMonitor(@PathVariable Long id, Authentication authentication) {
+        return MonitorResponse.from(findMonitor(id, authentication));
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    MonitorResponse createMonitor(@Valid @RequestBody CreateMonitorRequest request) {
+    MonitorResponse createMonitor(@Valid @RequestBody CreateMonitorRequest request, Authentication authentication) {
         Monitor monitor = new Monitor();
+        monitor.setOwner(currentUser(authentication));
         applyCreateRequest(monitor, request);
 
         return MonitorResponse.from(monitorRepository.save(monitor));
     }
 
     @PutMapping("/{id}")
-    MonitorResponse updateMonitor(@PathVariable Long id, @Valid @RequestBody UpdateMonitorRequest request) {
-        Monitor monitor = findMonitor(id);
+    MonitorResponse updateMonitor(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateMonitorRequest request,
+            Authentication authentication
+    ) {
+        Monitor monitor = findMonitor(id, authentication);
         monitor.setName(request.name());
         monitor.setUrl(request.url());
         monitor.setMethod(request.method());
@@ -83,14 +95,14 @@ public class MonitorController {
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    void deleteMonitor(@PathVariable Long id) {
-        Monitor monitor = findMonitor(id);
+    void deleteMonitor(@PathVariable Long id, Authentication authentication) {
+        Monitor monitor = findMonitor(id, authentication);
         monitorRepository.delete(monitor);
     }
 
     @GetMapping("/{id}/results")
-    List<CheckResultResponse> listRecentResults(@PathVariable Long id) {
-        findMonitor(id);
+    List<CheckResultResponse> listRecentResults(@PathVariable Long id, Authentication authentication) {
+        findMonitor(id, authentication);
 
         return checkResultRepository.findTop20ByMonitorIdOrderByCheckedAtDesc(id)
                 .stream()
@@ -99,21 +111,33 @@ public class MonitorController {
     }
 
     @GetMapping("/{id}/incidents")
-    List<IncidentResponse> listIncidents(@PathVariable Long id) {
-        findMonitor(id);
+    List<IncidentResponse> listIncidents(@PathVariable Long id, Authentication authentication) {
+        findMonitor(id, authentication);
 
         return incidentService.listMonitorIncidents(id);
     }
 
     @PostMapping("/{id}/run")
-    CheckResultResponse runCheckNow(@PathVariable Long id) {
-        Monitor monitor = findMonitor(id);
+    CheckResultResponse runCheckNow(@PathVariable Long id, Authentication authentication) {
+        Monitor monitor = findMonitor(id, authentication);
         return CheckResultResponse.from(monitorCheckService.check(monitor));
     }
 
-    private Monitor findMonitor(Long id) {
-        return monitorRepository.findById(id)
+    private Monitor findMonitor(Long id, Authentication authentication) {
+        return monitorRepository.findByIdAndOwnerExternalSubject(id, authentication.getName())
                 .orElseThrow(() -> new MonitorNotFoundException(id));
+    }
+
+    private UserIdentity currentUser(Authentication authentication) {
+        return userIdentityService.findOrCreate(authentication.getName(), emailFrom(authentication));
+    }
+
+    private String emailFrom(Authentication authentication) {
+        if (authentication.getPrincipal() instanceof Jwt jwt) {
+            return jwt.getClaimAsString("email");
+        }
+
+        return null;
     }
 
     private void applyCreateRequest(Monitor monitor, CreateMonitorRequest request) {

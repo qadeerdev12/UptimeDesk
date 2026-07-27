@@ -34,9 +34,9 @@ API queries and writes data only for that owner identity
 
 - Add Spring Security OAuth2 resource server support. Completed.
 - Protect monitor APIs. Completed.
+- Create an external auth identity model for the Supabase user id. Completed.
+- Filter monitors by authenticated owner. Completed.
 - Configure JWT issuer/JWK settings through environment variables.
-- Create an external auth identity model for the Supabase user id.
-- Filter monitors by authenticated owner.
 - Extend related check result and incident access through monitor ownership.
 
 ## Protected Endpoints
