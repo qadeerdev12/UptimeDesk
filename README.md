@@ -42,7 +42,7 @@ Planned:
 
 ## Authentication Direction
 
-Sprint 6 uses Supabase Auth on the frontend and Spring Boot JWT validation on the backend. The API uses the authenticated Supabase user id as the ownership key so each user can only access their own monitor records.
+Sprint 6 uses Supabase Auth on the frontend and Spring Boot JWT validation on the backend. The frontend attaches the active Supabase access token to API requests, and the API uses the authenticated Supabase user id as the ownership key so each user can only access their own monitor records.
 
 ## Use Cases
 

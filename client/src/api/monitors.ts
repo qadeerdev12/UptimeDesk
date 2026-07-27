@@ -1,8 +1,15 @@
 import type { CheckResult, DashboardSummary, Incident, Monitor, MonitorFormValues } from '../types/monitor'
+import { supabase } from '../auth/supabase'
 
 async function request<T>(url: string, options?: RequestInit) {
+  const accessToken = await getAccessToken()
+
   const response = await fetch(url, {
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+      ...options?.headers,
+    },
     ...options,
   })
 
@@ -17,6 +24,16 @@ async function request<T>(url: string, options?: RequestInit) {
   }
 
   return response.json() as Promise<T>
+}
+
+async function getAccessToken() {
+  if (!supabase) {
+    return null
+  }
+
+  const { data } = await supabase.auth.getSession()
+
+  return data.session?.access_token ?? null
 }
 
 export function fetchMonitors() {

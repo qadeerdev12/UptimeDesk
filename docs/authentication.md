@@ -62,8 +62,8 @@ Public local/system endpoints remain available without auth:
 - Add login and register screens/actions. Completed.
 - Add logout action. Completed.
 - Store the active Supabase session through Supabase client helpers. Completed.
-- Attach the access token to API requests.
-- Hide the dashboard until the user is authenticated.
+- Attach the access token to API requests. Completed.
+- Hide the dashboard until the user is authenticated. Completed.
 
 ## Environment Variables
 
