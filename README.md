@@ -39,6 +39,10 @@ Planned:
 - Vercel frontend deployment
 - Render backend deployment
 
+## Authentication Direction
+
+Sprint 6 will use Supabase Auth on the frontend and Spring Boot JWT validation on the backend. The API will use the authenticated Supabase user id as the ownership key so each user can only access their own monitors, check results, and incidents.
+
 ## Use Cases
 
 - Monitor a portfolio website
