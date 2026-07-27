@@ -171,7 +171,7 @@ POST   /api/incidents/{id}/acknowledge
 GET    /api/monitors/{id}/incidents
 ```
 
-The `/api/monitors/**` endpoints are protected by Spring Security, expect a bearer token, and return only monitors owned by the authenticated user.
+The monitor, dashboard, check-result, and incident data endpoints are protected by Spring Security, expect a bearer token, and return only records owned by the authenticated user.
 
 Example monitor creation:
 

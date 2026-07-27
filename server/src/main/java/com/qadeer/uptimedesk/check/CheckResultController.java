@@ -1,6 +1,7 @@
 package com.qadeer.uptimedesk.check;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,8 +19,8 @@ public class CheckResultController {
     }
 
     @GetMapping("/{id}")
-    CheckResultResponse getCheckResult(@PathVariable Long id) {
-        return checkResultRepository.findById(id)
+    CheckResultResponse getCheckResult(@PathVariable Long id, Authentication authentication) {
+        return checkResultRepository.findByIdAndMonitorOwnerExternalSubject(id, authentication.getName())
                 .map(CheckResultResponse::from)
                 .orElseThrow(() -> new CheckResultNotFoundException(id));
     }

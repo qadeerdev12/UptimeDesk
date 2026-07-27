@@ -32,12 +32,14 @@ public class DashboardSummaryService {
     }
 
     @Transactional(readOnly = true)
-    public DashboardSummaryResponse getSummary() {
-        List<Monitor> monitors = monitorRepository.findAll();
-        List<CheckResult> thirtyDayResults = checkResultRepository.findByCheckedAtAfter(
+    public DashboardSummaryResponse getSummary(String externalSubject) {
+        List<Monitor> monitors = monitorRepository.findByOwnerExternalSubject(externalSubject);
+        List<CheckResult> thirtyDayResults = checkResultRepository.findByMonitorOwnerExternalSubjectAndCheckedAtAfter(
+                externalSubject,
                 clock.instant().minus(Duration.ofDays(30))
         );
-        List<CheckResult> latestFailedChecks = checkResultRepository.findTop5ByStatusOrderByCheckedAtDesc(
+        List<CheckResult> latestFailedChecks = checkResultRepository.findTop5ByMonitorOwnerExternalSubjectAndStatusOrderByCheckedAtDesc(
+                externalSubject,
                 CheckStatus.FAILURE
         );
 

@@ -1,5 +1,7 @@
 package com.qadeer.uptimedesk.incident;
 
+import com.qadeer.uptimedesk.auth.UserIdentity;
+import com.qadeer.uptimedesk.auth.UserIdentityRepository;
 import com.qadeer.uptimedesk.check.CheckResult;
 import com.qadeer.uptimedesk.check.CheckResultRepository;
 import com.qadeer.uptimedesk.check.CheckStatus;
@@ -18,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -38,6 +41,9 @@ class IncidentControllerIntegrationTest {
     @Autowired
     private MonitorRepository monitorRepository;
 
+    @Autowired
+    private UserIdentityRepository userIdentityRepository;
+
     @Test
     void listsActiveIncidents() throws Exception {
         Incident openIncident = incidentRepository.save(openIncident());
@@ -46,7 +52,8 @@ class IncidentControllerIntegrationTest {
         resolvedIncident.setResolvedAt(Instant.now());
         incidentRepository.save(resolvedIncident);
 
-        mockMvc.perform(get("/api/incidents/active"))
+        mockMvc.perform(get("/api/incidents/active")
+                        .with(jwtFor("supabase-user-1")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(openIncident.getId()))
                 .andExpect(jsonPath("$[0].status").value("OPEN"))
@@ -57,7 +64,8 @@ class IncidentControllerIntegrationTest {
     void getsIncidentDetail() throws Exception {
         Incident incident = incidentRepository.save(openIncident());
 
-        mockMvc.perform(get("/api/incidents/{id}", incident.getId()))
+        mockMvc.perform(get("/api/incidents/{id}", incident.getId())
+                        .with(jwtFor("supabase-user-1")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(incident.getId()))
                 .andExpect(jsonPath("$.monitorId").value(incident.getMonitor().getId()))
@@ -76,7 +84,8 @@ class IncidentControllerIntegrationTest {
     void acknowledgesOpenIncident() throws Exception {
         Incident incident = incidentRepository.save(openIncident());
 
-        mockMvc.perform(post("/api/incidents/{id}/acknowledge", incident.getId()))
+        mockMvc.perform(post("/api/incidents/{id}/acknowledge", incident.getId())
+                        .with(jwtFor("supabase-user-1")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(incident.getId()))
                 .andExpect(jsonPath("$.monitorId").value(incident.getMonitor().getId()))
@@ -91,7 +100,8 @@ class IncidentControllerIntegrationTest {
 
     @Test
     void returnsNotFoundForMissingIncident() throws Exception {
-        mockMvc.perform(post("/api/incidents/{id}/acknowledge", 999L))
+        mockMvc.perform(post("/api/incidents/{id}/acknowledge", 999L)
+                        .with(jwtFor("supabase-user-1")))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("Incident not found: 999"));
     }
@@ -103,13 +113,36 @@ class IncidentControllerIntegrationTest {
         incident.setResolvedAt(Instant.now());
         Incident savedIncident = incidentRepository.save(incident);
 
-        mockMvc.perform(post("/api/incidents/{id}/acknowledge", savedIncident.getId()))
+        mockMvc.perform(post("/api/incidents/{id}/acknowledge", savedIncident.getId())
+                        .with(jwtFor("supabase-user-1")))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Resolved incidents cannot be acknowledged."));
     }
 
+    @Test
+    void hidesIncidentOwnedByAnotherUser() throws Exception {
+        Incident incident = incidentRepository.save(openIncident("owner-user"));
+
+        mockMvc.perform(get("/api/incidents/active")
+                        .with(jwtFor("other-user")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
+
+        mockMvc.perform(get("/api/incidents/{id}", incident.getId())
+                        .with(jwtFor("other-user")))
+                .andExpect(status().isNotFound());
+
+        mockMvc.perform(post("/api/incidents/{id}/acknowledge", incident.getId())
+                        .with(jwtFor("other-user")))
+                .andExpect(status().isNotFound());
+    }
+
     private Incident openIncident() {
-        Monitor monitor = monitorRepository.save(monitor("Portfolio API"));
+        return openIncident("supabase-user-1");
+    }
+
+    private Incident openIncident(String externalSubject) {
+        Monitor monitor = monitorRepository.save(monitor("Portfolio API", externalSubject));
         CheckResult checkResult = checkResultRepository.save(failedCheck(monitor));
 
         Incident incident = new Incident();
@@ -133,11 +166,27 @@ class IncidentControllerIntegrationTest {
         return result;
     }
 
-    private Monitor monitor(String name) {
+    private UserIdentity userIdentity(String externalSubject) {
+        return userIdentityRepository.findByExternalSubject(externalSubject)
+                .orElseGet(() -> {
+                    UserIdentity identity = new UserIdentity();
+                    identity.setExternalSubject(externalSubject);
+                    identity.setEmail(externalSubject + "@example.com");
+
+                    return userIdentityRepository.save(identity);
+                });
+    }
+
+    private Monitor monitor(String name, String externalSubject) {
         Monitor monitor = new Monitor();
+        monitor.setOwner(userIdentity(externalSubject));
         monitor.setName(name);
         monitor.setUrl("https://example.com/" + name.toLowerCase().replace(" ", "-"));
 
         return monitor;
+    }
+
+    private static org.springframework.test.web.servlet.request.RequestPostProcessor jwtFor(String subject) {
+        return jwt().jwt(jwt -> jwt.subject(subject));
     }
 }

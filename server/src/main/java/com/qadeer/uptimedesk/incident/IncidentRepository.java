@@ -15,4 +15,11 @@ public interface IncidentRepository extends JpaRepository<Incident, Long> {
     List<Incident> findTop20ByMonitorIdOrderByOpenedAtDesc(Long monitorId);
 
     List<Incident> findByStatusInOrderByOpenedAtDesc(Collection<IncidentStatus> statuses);
+
+    List<Incident> findByMonitorOwnerExternalSubjectAndStatusInOrderByOpenedAtDesc(
+            String externalSubject,
+            Collection<IncidentStatus> statuses
+    );
+
+    Optional<Incident> findByIdAndMonitorOwnerExternalSubject(Long id, String externalSubject);
 }

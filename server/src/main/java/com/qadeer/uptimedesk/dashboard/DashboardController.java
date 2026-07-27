@@ -1,5 +1,6 @@
 package com.qadeer.uptimedesk.dashboard;
 
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -15,7 +16,7 @@ public class DashboardController {
     }
 
     @GetMapping("/summary")
-    DashboardSummaryResponse getSummary() {
-        return dashboardSummaryService.getSummary();
+    DashboardSummaryResponse getSummary(Authentication authentication) {
+        return dashboardSummaryService.getSummary(authentication.getName());
     }
 }

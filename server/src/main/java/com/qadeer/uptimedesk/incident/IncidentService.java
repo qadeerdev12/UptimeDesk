@@ -28,6 +28,17 @@ public class IncidentService {
     }
 
     @Transactional(readOnly = true)
+    public List<IncidentResponse> listActiveIncidents(String externalSubject) {
+        return incidentRepository.findByMonitorOwnerExternalSubjectAndStatusInOrderByOpenedAtDesc(
+                        externalSubject,
+                        List.of(IncidentStatus.OPEN, IncidentStatus.ACKNOWLEDGED)
+                )
+                .stream()
+                .map(IncidentResponse::from)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
     public List<IncidentResponse> listMonitorIncidents(Long monitorId) {
         return incidentRepository.findTop20ByMonitorIdOrderByOpenedAtDesc(monitorId)
                 .stream()
@@ -42,9 +53,31 @@ public class IncidentService {
                 .orElseThrow(() -> new IncidentNotFoundException(id));
     }
 
+    @Transactional(readOnly = true)
+    public IncidentResponse getIncident(Long id, String externalSubject) {
+        return incidentRepository.findByIdAndMonitorOwnerExternalSubject(id, externalSubject)
+                .map(IncidentResponse::from)
+                .orElseThrow(() -> new IncidentNotFoundException(id));
+    }
+
     @Transactional
     public IncidentResponse acknowledgeIncident(Long id) {
         Incident incident = incidentRepository.findById(id)
+                .orElseThrow(() -> new IncidentNotFoundException(id));
+
+        if (incident.getStatus() == IncidentStatus.RESOLVED) {
+            throw new IncidentActionException("Resolved incidents cannot be acknowledged.");
+        }
+
+        incident.setStatus(IncidentStatus.ACKNOWLEDGED);
+        incident.setAcknowledgedAt(clock.instant());
+
+        return IncidentResponse.from(incidentRepository.save(incident));
+    }
+
+    @Transactional
+    public IncidentResponse acknowledgeIncident(Long id, String externalSubject) {
+        Incident incident = incidentRepository.findByIdAndMonitorOwnerExternalSubject(id, externalSubject)
                 .orElseThrow(() -> new IncidentNotFoundException(id));
 
         if (incident.getStatus() == IncidentStatus.RESOLVED) {

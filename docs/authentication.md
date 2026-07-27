@@ -36,14 +36,17 @@ API queries and writes data only for that owner identity
 - Protect monitor APIs. Completed.
 - Create an external auth identity model for the Supabase user id. Completed.
 - Filter monitors by authenticated owner. Completed.
-- Configure JWT issuer/JWK settings through environment variables.
-- Extend related check result and incident access through monitor ownership.
+- Configure JWT issuer/JWK settings through environment variables. Completed.
+- Extend related check result and incident access through monitor ownership. Completed.
 
 ## Protected Endpoints
 
-The monitor API now requires an authenticated bearer token:
+Authenticated user data APIs now require a bearer token:
 
 ```text
+/api/check-results/**
+/api/dashboard/**
+/api/incidents/**
 /api/monitors/**
 ```
 
