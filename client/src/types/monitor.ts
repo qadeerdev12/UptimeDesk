@@ -52,6 +52,7 @@ export type DashboardSummary = {
 export type Incident = {
   id: number
   monitorId: number
+  monitorName: string
   openedByCheckResultId: number
   resolvedByCheckResultId?: number
   latestCheckResultId?: number

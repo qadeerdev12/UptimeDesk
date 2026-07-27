@@ -54,6 +54,21 @@ class IncidentControllerIntegrationTest {
     }
 
     @Test
+    void getsIncidentDetail() throws Exception {
+        Incident incident = incidentRepository.save(openIncident());
+
+        mockMvc.perform(get("/api/incidents/{id}", incident.getId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(incident.getId()))
+                .andExpect(jsonPath("$.monitorId").value(incident.getMonitor().getId()))
+                .andExpect(jsonPath("$.monitorName").value("Portfolio API"))
+                .andExpect(jsonPath("$.openedByCheckResultId").value(incident.getOpenedByCheckResult().getId()))
+                .andExpect(jsonPath("$.latestCheckResultId").value(incident.getLatestCheckResult().getId()))
+                .andExpect(jsonPath("$.status").value("OPEN"))
+                .andExpect(jsonPath("$.openingReason").value("Monitor reached 2 consecutive failures; threshold is 2."));
+    }
+
+    @Test
     void acknowledgesOpenIncident() throws Exception {
         Incident incident = incidentRepository.save(openIncident());
 

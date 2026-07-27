@@ -162,6 +162,7 @@ GET    /api/monitors/{id}/results
 GET    /api/check-results/{id}
 GET    /api/dashboard/summary
 GET    /api/incidents/active
+GET    /api/incidents/{id}
 POST   /api/incidents/{id}/acknowledge
 GET    /api/monitors/{id}/incidents
 ```

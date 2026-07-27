@@ -6,9 +6,13 @@ import { formatDateTime } from '../../utils/date'
 export function ActiveIncidentsPanel({
   incidents,
   isFetching,
+  onSelectIncident,
+  selectedIncidentId,
 }: {
   incidents: Incident[]
   isFetching: boolean
+  onSelectIncident: (incident: Incident) => void
+  selectedIncidentId?: number
 }) {
   return (
     <section className="rounded-lg border border-slate-200 bg-white shadow-sm">
@@ -34,14 +38,21 @@ export function ActiveIncidentsPanel({
       ) : (
         <div className="divide-y divide-slate-100">
           {incidents.map((incident) => (
-            <article className="p-5" key={incident.id}>
+            <article
+              className={`cursor-pointer p-5 transition hover:bg-slate-50 ${
+                selectedIncidentId === incident.id ? 'bg-blue-50/70' : ''
+              }`}
+              key={incident.id}
+              onClick={() => onSelectIncident(incident)}
+            >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
                     <IncidentStatusBadge status={incident.status} />
                     <span className="text-xs font-medium text-slate-400">Incident #{incident.id}</span>
                   </div>
-                  <h3 className="mt-2 font-semibold text-slate-950">Monitor #{incident.monitorId}</h3>
+                  <h3 className="mt-2 font-semibold text-slate-950">{incident.monitorName}</h3>
+                  <p className="mt-1 text-xs text-slate-500">Monitor #{incident.monitorId}</p>
                 </div>
 
                 <div className="text-right text-xs text-slate-500">
@@ -74,7 +85,7 @@ export function ActiveIncidentsPanel({
   )
 }
 
-function IncidentStatusBadge({ status }: { status: Incident['status'] }) {
+export function IncidentStatusBadge({ status }: { status: Incident['status'] }) {
   if (status === 'ACKNOWLEDGED') {
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700">

@@ -71,3 +71,7 @@ export function fetchDashboardSummary() {
 export function fetchActiveIncidents() {
   return request<Incident[]>('/api/incidents/active')
 }
+
+export function fetchIncident(id: number) {
+  return request<Incident>(`/api/incidents/${id}`)
+}

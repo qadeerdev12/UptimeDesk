@@ -23,6 +23,11 @@ public class IncidentController {
         return incidentService.listActiveIncidents();
     }
 
+    @GetMapping("/{id}")
+    IncidentResponse getIncident(@PathVariable Long id) {
+        return incidentService.getIncident(id);
+    }
+
     @PostMapping("/{id}/acknowledge")
     IncidentResponse acknowledgeIncident(@PathVariable Long id) {
         return incidentService.acknowledgeIncident(id);

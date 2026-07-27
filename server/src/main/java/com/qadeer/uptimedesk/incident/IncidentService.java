@@ -35,6 +35,13 @@ public class IncidentService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public IncidentResponse getIncident(Long id) {
+        return incidentRepository.findById(id)
+                .map(IncidentResponse::from)
+                .orElseThrow(() -> new IncidentNotFoundException(id));
+    }
+
     @Transactional
     public IncidentResponse acknowledgeIncident(Long id) {
         Incident incident = incidentRepository.findById(id)

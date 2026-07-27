@@ -8,6 +8,7 @@ import {
   fetchActiveIncidents,
   fetchCheckResults,
   fetchDashboardSummary,
+  fetchIncident,
   fetchMonitors,
   runMonitorCheck,
   updateMonitor,
@@ -22,13 +23,14 @@ import {
   toFormValues,
 } from './data/monitorDefaults'
 import { ActiveIncidentsPanel } from './features/dashboard/ActiveIncidentsPanel'
+import { IncidentDetailPanel } from './features/dashboard/IncidentDetailPanel'
 import { LatencyChart } from './features/dashboard/LatencyChart'
 import type { LatencyRange } from './features/dashboard/LatencyChart'
 import { MonitorDetailPanel } from './features/dashboard/MonitorDetailPanel'
 import { MonitorForm } from './features/dashboard/MonitorForm'
 import { MonitorTable } from './features/dashboard/MonitorTable'
 import { RecentResultsTable } from './features/dashboard/RecentResultsTable'
-import type { CheckResult, DashboardSummary, Monitor, MonitorFormValues } from './types/monitor'
+import type { CheckResult, DashboardSummary, Incident, Monitor, MonitorFormValues } from './types/monitor'
 import { formatTime } from './utils/date'
 
 function App() {
@@ -39,6 +41,7 @@ function App() {
   const [isEditing, setIsEditing] = useState(false)
   const [latencyRange, setLatencyRange] = useState<LatencyRange>('latest')
   const [searchTerm, setSearchTerm] = useState('')
+  const [selectedIncidentId, setSelectedIncidentId] = useState<number | undefined>()
 
   const monitorsQuery = useQuery({
     queryKey: ['monitors'],
@@ -78,6 +81,13 @@ function App() {
     queryKey: ['active-incidents'],
     queryFn: fetchActiveIncidents,
     enabled: !backendUnavailable,
+    retry: false,
+  })
+
+  const incidentDetailQuery = useQuery({
+    queryKey: ['incident-detail', selectedIncidentId],
+    queryFn: () => fetchIncident(selectedIncidentId as number),
+    enabled: Boolean(selectedIncidentId && !backendUnavailable),
     retry: false,
   })
 
@@ -163,6 +173,10 @@ function App() {
     }
   }
 
+  function handleSelectIncident(incident: Incident) {
+    setSelectedIncidentId(incident.id)
+  }
+
   return (
     <AppShell
       backendUnavailable={backendUnavailable}
@@ -232,6 +246,14 @@ function App() {
         <ActiveIncidentsPanel
           incidents={activeIncidentsQuery.data ?? []}
           isFetching={activeIncidentsQuery.isFetching}
+          onSelectIncident={handleSelectIncident}
+          selectedIncidentId={selectedIncidentId}
+        />
+
+        <IncidentDetailPanel
+          incident={incidentDetailQuery.data}
+          isFetching={incidentDetailQuery.isFetching}
+          selectedIncidentId={selectedIncidentId}
         />
 
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
