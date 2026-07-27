@@ -6,6 +6,8 @@ export type CheckStatus = 'SUCCESS' | 'FAILURE'
 
 export type IncidentTransition = 'NONE' | 'OPEN_INCIDENT' | 'RESOLVE_INCIDENT'
 
+export type IncidentStatus = 'OPEN' | 'ACKNOWLEDGED' | 'RESOLVED'
+
 export type Monitor = {
   id: number
   name: string
@@ -45,6 +47,21 @@ export type DashboardSummary = {
   uptime7d: number
   uptime30d: number
   latestFailedChecks: FailedCheckSummary[]
+}
+
+export type Incident = {
+  id: number
+  monitorId: number
+  openedByCheckResultId: number
+  resolvedByCheckResultId?: number
+  latestCheckResultId?: number
+  status: IncidentStatus
+  openedAt: string
+  lastCheckedAt?: string
+  acknowledgedAt?: string
+  resolvedAt?: string
+  openingReason?: string
+  resolutionReason?: string
 }
 
 export type FailedCheckSummary = {

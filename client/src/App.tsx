@@ -5,6 +5,7 @@ import { Activity, AlertTriangle, Gauge, Loader2, ShieldCheck } from 'lucide-rea
 import {
   createMonitor,
   deleteMonitor,
+  fetchActiveIncidents,
   fetchCheckResults,
   fetchDashboardSummary,
   fetchMonitors,
@@ -20,6 +21,7 @@ import {
   sampleMonitors,
   toFormValues,
 } from './data/monitorDefaults'
+import { ActiveIncidentsPanel } from './features/dashboard/ActiveIncidentsPanel'
 import { LatencyChart } from './features/dashboard/LatencyChart'
 import type { LatencyRange } from './features/dashboard/LatencyChart'
 import { MonitorDetailPanel } from './features/dashboard/MonitorDetailPanel'
@@ -72,6 +74,13 @@ function App() {
     retry: false,
   })
 
+  const activeIncidentsQuery = useQuery({
+    queryKey: ['active-incidents'],
+    queryFn: fetchActiveIncidents,
+    enabled: !backendUnavailable,
+    retry: false,
+  })
+
   const createMonitorMutation = useMutation({
     mutationFn: createMonitor,
     onSuccess: (monitor) => {
@@ -79,6 +88,7 @@ function App() {
       setSelectedMonitorId(monitor.id)
       queryClient.invalidateQueries({ queryKey: ['monitors'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] })
+      queryClient.invalidateQueries({ queryKey: ['active-incidents'] })
     },
   })
 
@@ -218,6 +228,11 @@ function App() {
             updateError={updateMonitorMutation.error}
           />
         </div>
+
+        <ActiveIncidentsPanel
+          incidents={activeIncidentsQuery.data ?? []}
+          isFetching={activeIncidentsQuery.isFetching}
+        />
 
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
           <MonitorTable
