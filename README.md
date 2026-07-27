@@ -24,7 +24,7 @@ Implemented:
 - Store check results with status code, latency, timestamp, and error details
 - Record incident-rule outcomes when checks would open or resolve an incident
 - Track active incidents with detail views and timeline events
-- Authenticate users with Supabase login and registration UI
+- Authenticate users with Supabase login, registration, and logout UI
 - Protect monitor APIs and scope monitors to the authenticated user
 - View monitor status, configuration, and recent check results
 - Search monitored services

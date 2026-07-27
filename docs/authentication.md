@@ -60,8 +60,8 @@ Public local/system endpoints remain available without auth:
 
 - Add Supabase client configuration through Vite environment variables. Completed.
 - Add login and register screens/actions. Completed.
-- Add logout action.
-- Store the active Supabase session through Supabase client helpers.
+- Add logout action. Completed.
+- Store the active Supabase session through Supabase client helpers. Completed.
 - Attach the access token to API requests.
 - Hide the dashboard until the user is authenticated.
 

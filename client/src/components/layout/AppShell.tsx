@@ -9,16 +9,21 @@ import {
   Search,
   Settings,
   Signal,
+  LogOut,
 } from 'lucide-react'
 
 export function AppShell({
   backendUnavailable,
   children,
+  currentUserEmail,
+  onLogout,
   searchTerm,
   setSearchTerm,
 }: {
   backendUnavailable: boolean
   children: ReactNode
+  currentUserEmail?: string
+  onLogout: () => void
   searchTerm: string
   setSearchTerm: (value: string) => void
 }) {
@@ -28,6 +33,8 @@ export function AppShell({
       <main className="lg:pl-64">
         <Topbar
           backendUnavailable={backendUnavailable}
+          currentUserEmail={currentUserEmail}
+          onLogout={onLogout}
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
         />
@@ -76,10 +83,14 @@ function Sidebar() {
 
 function Topbar({
   backendUnavailable,
+  currentUserEmail,
+  onLogout,
   searchTerm,
   setSearchTerm,
 }: {
   backendUnavailable: boolean
+  currentUserEmail?: string
+  onLogout: () => void
   searchTerm: string
   setSearchTerm: (value: string) => void
 }) {
@@ -108,6 +119,17 @@ function Topbar({
           <Plus size={16} />
           New monitor
         </button>
+        <div className="hidden items-center gap-3 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm md:flex">
+          <span className="max-w-40 truncate text-slate-500">{currentUserEmail ?? 'Signed in'}</span>
+          <button
+            className="inline-flex items-center gap-1 font-semibold text-slate-700 hover:text-blue-700"
+            onClick={onLogout}
+            type="button"
+          >
+            <LogOut size={15} />
+            Logout
+          </button>
+        </div>
       </div>
     </header>
   )

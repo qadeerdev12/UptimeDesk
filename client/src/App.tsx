@@ -36,7 +36,7 @@ import type { CheckResult, DashboardSummary, Incident, Monitor, MonitorFormValue
 import { formatTime } from './utils/date'
 
 function App() {
-  const { isLoading: isAuthLoading, user } = useAuth()
+  const { isLoading: isAuthLoading, signOut, user } = useAuth()
   const queryClient = useQueryClient()
   const [createForm, setCreateForm] = useState<MonitorFormValues>(emptyMonitorForm)
   const [editForm, setEditForm] = useState<MonitorFormValues>(emptyMonitorForm)
@@ -181,6 +181,15 @@ function App() {
     setSelectedIncidentId(incident.id)
   }
 
+  function handleLogout() {
+    signOut().then(() => {
+      queryClient.clear()
+      setSelectedMonitorId(null)
+      setSelectedIncidentId(undefined)
+      setIsEditing(false)
+    })
+  }
+
   if (isAuthLoading) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-slate-50 text-slate-600">
@@ -199,6 +208,8 @@ function App() {
   return (
     <AppShell
       backendUnavailable={backendUnavailable}
+      currentUserEmail={user.email}
+      onLogout={handleLogout}
       searchTerm={searchTerm}
       setSearchTerm={setSearchTerm}
     >
