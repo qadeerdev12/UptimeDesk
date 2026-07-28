@@ -275,6 +275,7 @@ Database:
 
 - Supabase PostgreSQL
 - Credentials supplied through `DATABASE_URL`, `DATABASE_USERNAME`, and `DATABASE_PASSWORD`
+- Setup guide: [`docs/supabase-postgres.md`](docs/supabase-postgres.md)
 - Production migrations to be added with Flyway or Liquibase
 
 ## Portfolio Value
