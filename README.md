@@ -130,6 +130,8 @@ cd server
 ./mvnw spring-boot:run
 ```
 
+The backend uses the `dev` profile by default, which runs against local H2.
+
 The backend runs at:
 
 ```text
@@ -151,6 +153,30 @@ http://localhost:5173
 ```
 
 The Vite dev server proxies `/api` requests to the Spring Boot backend.
+
+## Backend Profiles
+
+Development profile:
+
+```bash
+cd server
+./mvnw spring-boot:run
+```
+
+Production profile:
+
+```bash
+cd server
+SPRING_PROFILES_ACTIVE=prod \
+DATABASE_URL=jdbc:postgresql://your-supabase-host:5432/postgres \
+DATABASE_USERNAME=your_database_user \
+DATABASE_PASSWORD=your_database_password \
+SUPABASE_JWT_ISSUER=your_supabase_jwt_issuer \
+SUPABASE_JWT_JWK_SET_URI=your_supabase_jwk_set_uri \
+./mvnw spring-boot:run
+```
+
+Production values must come from deployment environment variables, not committed files.
 
 ## API Endpoints
 
@@ -226,10 +252,8 @@ Completed:
 
 Next milestones:
 
-- Replace starter dashboard analytics with real uptime calculations
-- Add incident detection and recovery tracking
 - Connect production profile to Supabase PostgreSQL
-- Add authentication and user-owned monitors
+- Add database migrations with Flyway or Liquibase
 - Deploy frontend to Vercel and backend to Render
 
 ## Deployment Plan
@@ -245,11 +269,12 @@ Backend on Render:
 - Root directory: `server`
 - Build command: `./mvnw clean package`
 - Start command: `java -jar target/*.jar`
+- Environment: `SPRING_PROFILES_ACTIVE=prod`
 
 Database:
 
 - Supabase PostgreSQL
-- Credentials supplied through environment variables
+- Credentials supplied through `DATABASE_URL`, `DATABASE_USERNAME`, and `DATABASE_PASSWORD`
 - Production migrations to be added with Flyway or Liquibase
 
 ## Portfolio Value

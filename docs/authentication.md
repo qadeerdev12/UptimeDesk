@@ -73,6 +73,9 @@ Public local/system endpoints remain available without auth:
 Backend:
 
 ```text
+DATABASE_URL=
+DATABASE_USERNAME=
+DATABASE_PASSWORD=
 SUPABASE_JWT_ISSUER=
 SUPABASE_JWT_JWK_SET_URI=
 ```
