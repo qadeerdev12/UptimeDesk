@@ -8,7 +8,7 @@ It is built as a practical portfolio project and as a real tool for monitoring p
 
 UptimeDesk lets you register API endpoints, define what a healthy response looks like, run checks manually, and collect scheduled health-check results over time.
 
-The project is intentionally more than a basic CRUD app. The backend performs scheduled work, stores historical check results, and provides the foundation for incidents, alerts, uptime analytics, and public status pages.
+The project is intentionally more than a basic CRUD app. The backend performs scheduled work, stores historical check results, tracks incidents, sends alerts, and provides the foundation for uptime analytics and public status pages.
 
 ## Key Features
 
@@ -24,6 +24,9 @@ Implemented:
 - Store check results with status code, latency, timestamp, and error details
 - Record incident-rule outcomes when checks would open or resolve an incident
 - Track active incidents with detail views and timeline events
+- Send email alerts when incidents open and recovery emails when monitors recover
+- Manage email alert destinations from the dashboard
+- Apply per-channel alert cooldowns to avoid notification spam
 - Authenticate users with Supabase login, registration, and logout UI
 - Protect monitor APIs and scope monitors to the authenticated user
 - View monitor status, configuration, and recent check results
@@ -31,11 +34,10 @@ Implemented:
 - Display dashboard metrics and latency chart from collected check results
 - Show clear monitor status pills for Operational, Degraded, Down, and Unknown states
 - Handle loading, empty, error, and backend-offline states
+- Supabase PostgreSQL production database with Flyway migrations
 
 Planned:
 
-- Email alerts for outages and recoveries
-- Supabase PostgreSQL production database
 - Public status pages
 - Vercel frontend deployment
 - Render backend deployment
@@ -195,9 +197,13 @@ GET    /api/incidents/active
 GET    /api/incidents/{id}
 POST   /api/incidents/{id}/acknowledge
 GET    /api/monitors/{id}/incidents
+GET    /api/alert-channels
+POST   /api/alert-channels
+PUT    /api/alert-channels/{id}
+DELETE /api/alert-channels/{id}
 ```
 
-The monitor, dashboard, check-result, and incident data endpoints are protected by Spring Security, expect a bearer token, and return only records owned by the authenticated user.
+The monitor, dashboard, check-result, incident, and alert-channel data endpoints are protected by Spring Security, expect a bearer token, and return only records owned by the authenticated user.
 
 Example monitor creation:
 
@@ -247,14 +253,18 @@ Completed:
 - Incident-rule foundation for outage and recovery tracking
 - Recent results UI and real latency chart data
 - Backend-driven dashboard analytics and status pills
+- Incident tracking with active incident and detail views
+- Email alert configuration, outage alerts, recovery alerts, and cooldown rules
+- Dashboard alert destination management
+- Supabase Auth ownership protection
+- Supabase PostgreSQL with Flyway-managed schema
 - Backend integration tests
 - Frontend lint and production build checks
 
 Next milestones:
 
-- Connect production profile to Supabase PostgreSQL
-- Add database migrations with Flyway or Liquibase
-- Add email alert configuration
+- Run an end-to-end SMTP alert delivery test
+- Add optional Slack or Discord webhook alerts
 - Deploy frontend to Vercel and backend to Render
 
 ## Deployment Plan

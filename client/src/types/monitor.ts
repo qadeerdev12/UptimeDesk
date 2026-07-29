@@ -99,3 +99,24 @@ export type MonitorFormValues = {
   failureThreshold: number
   active: boolean
 }
+
+
+export type AlertChannelType = 'EMAIL'
+
+export type AlertChannel = {
+  id: number
+  type: AlertChannelType
+  destination: string
+  enabled: boolean
+  cooldownMinutes: number
+  lastIncidentAlertSentAt?: string
+  lastRecoveryAlertSentAt?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export type AlertChannelFormValues = {
+  destination: string
+  enabled: boolean
+  cooldownMinutes: number
+}

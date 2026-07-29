@@ -3,14 +3,18 @@ import type { FormEvent } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Activity, AlertTriangle, Gauge, Loader2, ShieldCheck } from 'lucide-react'
 import {
+  createAlertChannel,
   createMonitor,
+  deleteAlertChannel,
   deleteMonitor,
   fetchActiveIncidents,
+  fetchAlertChannels,
   fetchCheckResults,
   fetchDashboardSummary,
   fetchIncident,
   fetchMonitors,
   runMonitorCheck,
+  updateAlertChannel,
   updateMonitor,
 } from './api/monitors'
 import { useAuth } from './auth/AuthContext'
@@ -23,6 +27,7 @@ import {
   sampleMonitors,
   toFormValues,
 } from './data/monitorDefaults'
+import { AlertSettingsPanel } from './features/alerts/AlertSettingsPanel'
 import { ActiveIncidentsPanel } from './features/dashboard/ActiveIncidentsPanel'
 import { AuthPage } from './features/auth/AuthPage'
 import { IncidentDetailPanel } from './features/dashboard/IncidentDetailPanel'
@@ -32,7 +37,7 @@ import { MonitorDetailPanel } from './features/dashboard/MonitorDetailPanel'
 import { MonitorForm } from './features/dashboard/MonitorForm'
 import { MonitorTable } from './features/dashboard/MonitorTable'
 import { RecentResultsTable } from './features/dashboard/RecentResultsTable'
-import type { CheckResult, DashboardSummary, Incident, Monitor, MonitorFormValues } from './types/monitor'
+import type { AlertChannel, AlertChannelFormValues, CheckResult, DashboardSummary, Incident, Monitor, MonitorFormValues } from './types/monitor'
 import { formatTime } from './utils/date'
 
 function App() {
@@ -45,6 +50,11 @@ function App() {
   const [latencyRange, setLatencyRange] = useState<LatencyRange>('latest')
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedIncidentId, setSelectedIncidentId] = useState<number | undefined>()
+  const [alertForm, setAlertForm] = useState<AlertChannelFormValues>({
+    destination: '',
+    enabled: true,
+    cooldownMinutes: 30,
+  })
 
   const monitorsQuery = useQuery({
     queryKey: ['monitors'],
@@ -95,6 +105,13 @@ function App() {
     retry: false,
   })
 
+  const alertChannelsQuery = useQuery({
+    queryKey: ['alert-channels'],
+    queryFn: fetchAlertChannels,
+    enabled: Boolean(user && !backendUnavailable),
+    retry: false,
+  })
+
   const createMonitorMutation = useMutation({
     mutationFn: createMonitor,
     onSuccess: (monitor) => {
@@ -134,6 +151,28 @@ function App() {
       if (selectedMonitor) {
         queryClient.invalidateQueries({ queryKey: ['check-results', selectedMonitor.id] })
       }
+    },
+  })
+
+  const createAlertChannelMutation = useMutation({
+    mutationFn: createAlertChannel,
+    onSuccess: () => {
+      setAlertForm({ destination: '', enabled: true, cooldownMinutes: 30 })
+      queryClient.invalidateQueries({ queryKey: ['alert-channels'] })
+    },
+  })
+
+  const updateAlertChannelMutation = useMutation({
+    mutationFn: updateAlertChannel,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['alert-channels'] })
+    },
+  })
+
+  const deleteAlertChannelMutation = useMutation({
+    mutationFn: deleteAlertChannel,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['alert-channels'] })
     },
   })
 
@@ -179,6 +218,30 @@ function App() {
 
   function handleSelectIncident(incident: Incident) {
     setSelectedIncidentId(incident.id)
+  }
+
+  function handleCreateAlertChannel(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    createAlertChannelMutation.mutate(alertForm)
+  }
+
+  function handleToggleAlertChannel(channel: AlertChannel) {
+    updateAlertChannelMutation.mutate({
+      id: channel.id,
+      payload: {
+        destination: channel.destination,
+        enabled: !channel.enabled,
+        cooldownMinutes: channel.cooldownMinutes,
+      },
+    })
+  }
+
+  function handleDeleteAlertChannel(id: number) {
+    const shouldDelete = window.confirm('Delete this alert destination? This cannot be undone.')
+
+    if (shouldDelete) {
+      deleteAlertChannelMutation.mutate(id)
+    }
   }
 
   function handleLogout() {
@@ -284,6 +347,22 @@ function App() {
           incident={incidentDetailQuery.data}
           isFetching={incidentDetailQuery.isFetching}
           selectedIncidentId={selectedIncidentId}
+        />
+
+        <AlertSettingsPanel
+          channels={alertChannelsQuery.data ?? []}
+          createError={createAlertChannelMutation.error}
+          deleteError={deleteAlertChannelMutation.error}
+          disabled={backendUnavailable}
+          form={alertForm}
+          isCreating={createAlertChannelMutation.isPending}
+          isFetching={alertChannelsQuery.isFetching}
+          isUpdating={updateAlertChannelMutation.isPending}
+          onCreate={handleCreateAlertChannel}
+          onDelete={handleDeleteAlertChannel}
+          onFormChange={setAlertForm}
+          onToggle={handleToggleAlertChannel}
+          updateError={updateAlertChannelMutation.error}
         />
 
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">

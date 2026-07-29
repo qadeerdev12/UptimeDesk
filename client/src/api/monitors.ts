@@ -1,4 +1,4 @@
-import type { CheckResult, DashboardSummary, Incident, Monitor, MonitorFormValues } from '../types/monitor'
+import type { AlertChannel, AlertChannelFormValues, CheckResult, DashboardSummary, Incident, Monitor, MonitorFormValues } from '../types/monitor'
 import { supabase } from '../auth/supabase'
 
 async function request<T>(url: string, options?: RequestInit) {
@@ -91,4 +91,30 @@ export function fetchActiveIncidents() {
 
 export function fetchIncident(id: number) {
   return request<Incident>(`/api/incidents/${id}`)
+}
+
+
+export function fetchAlertChannels() {
+  return request<AlertChannel[]>('/api/alert-channels')
+}
+
+export function createAlertChannel(payload: AlertChannelFormValues) {
+  return request<AlertChannel>('/api/alert-channels', {
+    method: 'POST',
+    body: JSON.stringify({
+      destination: payload.destination,
+      cooldownMinutes: payload.cooldownMinutes,
+    }),
+  })
+}
+
+export function updateAlertChannel({ id, payload }: { id: number; payload: AlertChannelFormValues }) {
+  return request<AlertChannel>(`/api/alert-channels/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  })
+}
+
+export function deleteAlertChannel(id: number) {
+  return request<void>(`/api/alert-channels/${id}`, { method: 'DELETE' })
 }
