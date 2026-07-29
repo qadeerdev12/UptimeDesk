@@ -1,5 +1,6 @@
 package com.qadeer.uptimedesk.check;
 
+import com.qadeer.uptimedesk.alert.IncidentAlertService;
 import com.qadeer.uptimedesk.incident.IncidentDecision;
 import com.qadeer.uptimedesk.incident.Incident;
 import com.qadeer.uptimedesk.incident.IncidentRepository;
@@ -22,19 +23,22 @@ public class MonitorCheckService {
     private final MonitorRepository monitorRepository;
     private final EndpointCheckClient endpointCheckClient;
     private final IncidentRuleEngine incidentRuleEngine;
+    private final IncidentAlertService incidentAlertService;
 
     public MonitorCheckService(
             CheckResultRepository checkResultRepository,
             IncidentRepository incidentRepository,
             MonitorRepository monitorRepository,
             EndpointCheckClient endpointCheckClient,
-            IncidentRuleEngine incidentRuleEngine
+            IncidentRuleEngine incidentRuleEngine,
+            IncidentAlertService incidentAlertService
     ) {
         this.checkResultRepository = checkResultRepository;
         this.incidentRepository = incidentRepository;
         this.monitorRepository = monitorRepository;
         this.endpointCheckClient = endpointCheckClient;
         this.incidentRuleEngine = incidentRuleEngine;
+        this.incidentAlertService = incidentAlertService;
     }
 
     public CheckResult check(Monitor monitor) {
@@ -103,7 +107,8 @@ public class MonitorCheckService {
         incident.setLastCheckedAt(checkResult.getCheckedAt());
         incident.setOpeningReason(reason);
 
-        incidentRepository.save(incident);
+        Incident savedIncident = incidentRepository.save(incident);
+        incidentAlertService.sendIncidentOpenedAlert(savedIncident);
     }
 
     private void keepActiveIncidentOpen(Monitor monitor, CheckResult checkResult) {

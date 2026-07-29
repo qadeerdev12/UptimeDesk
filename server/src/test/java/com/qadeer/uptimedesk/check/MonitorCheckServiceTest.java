@@ -1,5 +1,6 @@
 package com.qadeer.uptimedesk.check;
 
+import com.qadeer.uptimedesk.alert.IncidentAlertService;
 import com.qadeer.uptimedesk.incident.IncidentRuleEngine;
 import com.qadeer.uptimedesk.incident.Incident;
 import com.qadeer.uptimedesk.incident.IncidentRepository;
@@ -39,6 +40,9 @@ class MonitorCheckServiceTest {
     @Mock
     private EndpointCheckClient endpointCheckClient;
 
+    @Mock
+    private IncidentAlertService incidentAlertService;
+
     @Test
     void keepsMonitorUpUntilFailureThresholdIsReached() {
         Monitor monitor = new Monitor();
@@ -46,6 +50,7 @@ class MonitorCheckServiceTest {
 
         when(endpointCheckClient.check(monitor)).thenReturn(EndpointCheck.failure(500, "Server error"));
         when(checkResultRepository.save(any(CheckResult.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(incidentRepository.save(any(Incident.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(incidentRepository.findFirstByMonitorIdAndStatusInOrderByOpenedAtDesc(
                 eq(monitor.getId()),
                 eq(List.of(IncidentStatus.OPEN, IncidentStatus.ACKNOWLEDGED))
@@ -56,7 +61,8 @@ class MonitorCheckServiceTest {
                 incidentRepository,
                 monitorRepository,
                 endpointCheckClient,
-                new IncidentRuleEngine()
+                new IncidentRuleEngine(),
+                incidentAlertService
         );
 
         CheckResult firstResult = service.check(monitor);
@@ -77,6 +83,7 @@ class MonitorCheckServiceTest {
         assertThat(incidentCaptor.getValue().getMonitor()).isEqualTo(monitor);
         assertThat(incidentCaptor.getValue().getOpenedByCheckResult()).isEqualTo(secondResult);
         assertThat(incidentCaptor.getValue().getOpeningReason()).contains("threshold is 2");
+        verify(incidentAlertService).sendIncidentOpenedAlert(incidentCaptor.getValue());
     }
 
     @Test
@@ -102,7 +109,8 @@ class MonitorCheckServiceTest {
                 incidentRepository,
                 monitorRepository,
                 endpointCheckClient,
-                new IncidentRuleEngine()
+                new IncidentRuleEngine(),
+                incidentAlertService
         );
 
         CheckResult result = service.check(monitor);
@@ -139,13 +147,15 @@ class MonitorCheckServiceTest {
                 incidentRepository,
                 monitorRepository,
                 endpointCheckClient,
-                new IncidentRuleEngine()
+                new IncidentRuleEngine(),
+                incidentAlertService
         );
 
         CheckResult result = service.check(monitor);
 
         assertThat(result.getIncidentTransition()).isEqualTo(IncidentTransition.OPEN_INCIDENT);
         verify(incidentRepository, never()).save(any(Incident.class));
+        verify(incidentAlertService, never()).sendIncidentOpenedAlert(any(Incident.class));
     }
 
     @Test
@@ -171,7 +181,8 @@ class MonitorCheckServiceTest {
                 incidentRepository,
                 monitorRepository,
                 endpointCheckClient,
-                new IncidentRuleEngine()
+                new IncidentRuleEngine(),
+                incidentAlertService
         );
 
         CheckResult result = service.check(monitor);
