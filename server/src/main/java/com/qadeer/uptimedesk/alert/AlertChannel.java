@@ -10,6 +10,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -38,6 +39,13 @@ public class AlertChannel {
     private String destination;
 
     private boolean enabled = true;
+
+    @Min(1)
+    private int cooldownMinutes = 30;
+
+    private Instant lastIncidentAlertSentAt;
+
+    private Instant lastRecoveryAlertSentAt;
 
     private Instant createdAt = Instant.now();
 

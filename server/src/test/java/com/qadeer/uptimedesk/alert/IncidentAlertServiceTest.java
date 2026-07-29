@@ -6,6 +6,9 @@ import com.qadeer.uptimedesk.monitor.Monitor;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -16,9 +19,16 @@ import static org.mockito.Mockito.when;
 
 class IncidentAlertServiceTest {
 
+    private static final Instant NOW = Instant.parse("2026-07-29T10:00:00Z");
+
     private final AlertChannelRepository alertChannelRepository = mock(AlertChannelRepository.class);
     private final AlertEmailSender alertEmailSender = mock(AlertEmailSender.class);
-    private final IncidentAlertService incidentAlertService = new IncidentAlertService(alertChannelRepository, alertEmailSender);
+    private final Clock clock = Clock.fixed(NOW, ZoneOffset.UTC);
+    private final IncidentAlertService incidentAlertService = new IncidentAlertService(
+            alertChannelRepository,
+            alertEmailSender,
+            clock
+    );
 
     @Test
     void sendsIncidentOpenedEmailToEnabledOwnerChannels() {
@@ -30,18 +40,39 @@ class IncidentAlertServiceTest {
 
         when(alertChannelRepository.findByOwnerIdAndEnabledTrueOrderByCreatedAtDesc(owner.getId()))
                 .thenReturn(List.of(channel));
+        when(alertEmailSender.send(org.mockito.ArgumentMatchers.any(AlertEmailMessage.class))).thenReturn(true);
 
         incidentAlertService.sendIncidentOpenedAlert(incident);
 
         ArgumentCaptor<AlertEmailMessage> messageCaptor = ArgumentCaptor.forClass(AlertEmailMessage.class);
         verify(alertEmailSender).send(messageCaptor.capture());
+        verify(alertChannelRepository).save(channel);
 
         AlertEmailMessage message = messageCaptor.getValue();
         assertThat(message.to()).isEqualTo("qadeer@example.com");
         assertThat(message.subject()).isEqualTo("UptimeDesk alert: Portfolio API is down");
         assertThat(message.body()).contains("Portfolio API", "https://api.example.com/health", "threshold is 2");
+        assertThat(channel.getLastIncidentAlertSentAt()).isEqualTo(NOW);
+        assertThat(channel.getUpdatedAt()).isEqualTo(NOW);
     }
 
+    @Test
+    void skipsIncidentOpenedEmailWhenChannelIsInsideCooldownWindow() {
+        UserIdentity owner = new UserIdentity();
+        owner.setId(7L);
+        Incident incident = incident(monitor(owner));
+        AlertChannel channel = emailChannel("qadeer@example.com");
+        channel.setCooldownMinutes(30);
+        channel.setLastIncidentAlertSentAt(NOW.minusSeconds(60));
+
+        when(alertChannelRepository.findByOwnerIdAndEnabledTrueOrderByCreatedAtDesc(owner.getId()))
+                .thenReturn(List.of(channel));
+
+        incidentAlertService.sendIncidentOpenedAlert(incident);
+
+        verify(alertEmailSender, never()).send(org.mockito.ArgumentMatchers.any(AlertEmailMessage.class));
+        verify(alertChannelRepository, never()).save(org.mockito.ArgumentMatchers.any(AlertChannel.class));
+    }
 
     @Test
     void sendsIncidentResolvedEmailToEnabledOwnerChannels() {
@@ -54,16 +85,20 @@ class IncidentAlertServiceTest {
 
         when(alertChannelRepository.findByOwnerIdAndEnabledTrueOrderByCreatedAtDesc(owner.getId()))
                 .thenReturn(List.of(channel));
+        when(alertEmailSender.send(org.mockito.ArgumentMatchers.any(AlertEmailMessage.class))).thenReturn(true);
 
         incidentAlertService.sendIncidentResolvedAlert(incident);
 
         ArgumentCaptor<AlertEmailMessage> messageCaptor = ArgumentCaptor.forClass(AlertEmailMessage.class);
         verify(alertEmailSender).send(messageCaptor.capture());
+        verify(alertChannelRepository).save(channel);
 
         AlertEmailMessage message = messageCaptor.getValue();
         assertThat(message.to()).isEqualTo("qadeer@example.com");
         assertThat(message.subject()).isEqualTo("UptimeDesk recovery: Portfolio API is back up");
         assertThat(message.body()).contains("Portfolio API", "https://api.example.com/health", "recovered");
+        assertThat(channel.getLastRecoveryAlertSentAt()).isEqualTo(NOW);
+        assertThat(channel.getUpdatedAt()).isEqualTo(NOW);
     }
 
     @Test

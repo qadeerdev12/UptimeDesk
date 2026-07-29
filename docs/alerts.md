@@ -29,9 +29,10 @@ Local development can keep `ALERT_EMAIL_ENABLED=false` so alert code can be test
 - `MailAlertEmailSender` uses Spring's `MailSender` and returns `false` when email alerts are disabled.
 - Incident-open alerts are sent when a new incident is created.
 - Recovery alerts are sent when an active incident resolves.
+- Each alert channel has separate cooldown tracking for outage and recovery alerts.
+- Alert timestamps are recorded only after an email send succeeds.
 
 ## Next Steps
 
 - Call the email sender when an incident opens.
-- Add cooldown rules so repeated failures do not spam users.
 - Add a frontend alert settings page for managing alert channels.

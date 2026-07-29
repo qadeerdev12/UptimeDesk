@@ -3,6 +3,8 @@ package com.qadeer.uptimedesk.alert;
 import com.qadeer.uptimedesk.auth.UserIdentity;
 import com.qadeer.uptimedesk.auth.UserIdentityRepository;
 import org.junit.jupiter.api.Test;
+
+import java.time.Instant;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 
@@ -21,18 +23,25 @@ class AlertChannelRepositoryIntegrationTest {
     void persistsAlertChannelForOwner() {
         UserIdentity owner = userIdentityRepository.save(userIdentity("supabase-user-1", "qadeer@example.com"));
 
-        AlertChannel savedChannel = alertChannelRepository.save(emailChannel(owner, "qadeer@example.com", true));
+        AlertChannel channel = emailChannel(owner, "qadeer@example.com", true);
+        channel.setCooldownMinutes(15);
+        channel.setLastIncidentAlertSentAt(Instant.parse("2026-07-29T09:00:00Z"));
+        channel.setLastRecoveryAlertSentAt(Instant.parse("2026-07-29T09:30:00Z"));
+        AlertChannel savedChannel = alertChannelRepository.save(channel);
 
         assertThat(alertChannelRepository.findByOwnerIdOrderByCreatedAtDesc(owner.getId()))
                 .singleElement()
-                .satisfies(channel -> {
-                    assertThat(channel.getId()).isEqualTo(savedChannel.getId());
-                    assertThat(channel.getOwner().getId()).isEqualTo(owner.getId());
-                    assertThat(channel.getType()).isEqualTo(AlertChannelType.EMAIL);
-                    assertThat(channel.getDestination()).isEqualTo("qadeer@example.com");
-                    assertThat(channel.isEnabled()).isTrue();
-                    assertThat(channel.getCreatedAt()).isNotNull();
-                    assertThat(channel.getUpdatedAt()).isNotNull();
+                .satisfies(foundChannel -> {
+                    assertThat(foundChannel.getId()).isEqualTo(savedChannel.getId());
+                    assertThat(foundChannel.getOwner().getId()).isEqualTo(owner.getId());
+                    assertThat(foundChannel.getType()).isEqualTo(AlertChannelType.EMAIL);
+                    assertThat(foundChannel.getDestination()).isEqualTo("qadeer@example.com");
+                    assertThat(foundChannel.isEnabled()).isTrue();
+                    assertThat(foundChannel.getCooldownMinutes()).isEqualTo(15);
+                    assertThat(foundChannel.getLastIncidentAlertSentAt()).isEqualTo(Instant.parse("2026-07-29T09:00:00Z"));
+                    assertThat(foundChannel.getLastRecoveryAlertSentAt()).isEqualTo(Instant.parse("2026-07-29T09:30:00Z"));
+                    assertThat(foundChannel.getCreatedAt()).isNotNull();
+                    assertThat(foundChannel.getUpdatedAt()).isNotNull();
                 });
     }
 
