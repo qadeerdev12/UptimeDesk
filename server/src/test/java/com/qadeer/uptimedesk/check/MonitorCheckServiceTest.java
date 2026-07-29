@@ -126,6 +126,7 @@ class MonitorCheckServiceTest {
         assertThat(existingIncident.getResolvedAt()).isEqualTo(result.getCheckedAt());
         assertThat(existingIncident.getResolutionReason()).contains("recovered");
         verify(incidentRepository).save(existingIncident);
+        verify(incidentAlertService).sendIncidentResolvedAlert(existingIncident);
     }
 
     @Test
@@ -156,6 +157,7 @@ class MonitorCheckServiceTest {
         assertThat(result.getIncidentTransition()).isEqualTo(IncidentTransition.OPEN_INCIDENT);
         verify(incidentRepository, never()).save(any(Incident.class));
         verify(incidentAlertService, never()).sendIncidentOpenedAlert(any(Incident.class));
+        verify(incidentAlertService, never()).sendIncidentResolvedAlert(any(Incident.class));
     }
 
     @Test
@@ -192,5 +194,6 @@ class MonitorCheckServiceTest {
         assertThat(existingIncident.getLatestCheckResult()).isEqualTo(result);
         assertThat(existingIncident.getLastCheckedAt()).isEqualTo(result.getCheckedAt());
         verify(incidentRepository).save(existingIncident);
+        verify(incidentAlertService, never()).sendIncidentResolvedAlert(any(Incident.class));
     }
 }

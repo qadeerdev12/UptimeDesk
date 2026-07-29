@@ -42,6 +42,30 @@ class IncidentAlertServiceTest {
         assertThat(message.body()).contains("Portfolio API", "https://api.example.com/health", "threshold is 2");
     }
 
+
+    @Test
+    void sendsIncidentResolvedEmailToEnabledOwnerChannels() {
+        UserIdentity owner = new UserIdentity();
+        owner.setId(7L);
+        Monitor monitor = monitor(owner);
+        Incident incident = incident(monitor);
+        incident.setResolutionReason("Monitor recovered after a successful check.");
+        AlertChannel channel = emailChannel("qadeer@example.com");
+
+        when(alertChannelRepository.findByOwnerIdAndEnabledTrueOrderByCreatedAtDesc(owner.getId()))
+                .thenReturn(List.of(channel));
+
+        incidentAlertService.sendIncidentResolvedAlert(incident);
+
+        ArgumentCaptor<AlertEmailMessage> messageCaptor = ArgumentCaptor.forClass(AlertEmailMessage.class);
+        verify(alertEmailSender).send(messageCaptor.capture());
+
+        AlertEmailMessage message = messageCaptor.getValue();
+        assertThat(message.to()).isEqualTo("qadeer@example.com");
+        assertThat(message.subject()).isEqualTo("UptimeDesk recovery: Portfolio API is back up");
+        assertThat(message.body()).contains("Portfolio API", "https://api.example.com/health", "recovered");
+    }
+
     @Test
     void skipsIncidentOpenedAlertWhenMonitorHasNoOwner() {
         Incident incident = incident(monitor(null));

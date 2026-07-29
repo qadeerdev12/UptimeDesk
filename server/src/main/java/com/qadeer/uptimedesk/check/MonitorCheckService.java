@@ -136,6 +136,7 @@ public class MonitorCheckService {
                     incident.setResolvedAt(checkResult.getCheckedAt());
                     incident.setResolutionReason(reason);
                     incidentRepository.save(incident);
+                    incidentAlertService.sendIncidentResolvedAlert(incident);
                 });
     }
 }
