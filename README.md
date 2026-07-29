@@ -254,6 +254,7 @@ Next milestones:
 
 - Connect production profile to Supabase PostgreSQL
 - Add database migrations with Flyway or Liquibase
+- Add email alert configuration
 - Deploy frontend to Vercel and backend to Render
 
 ## Deployment Plan
@@ -276,7 +277,8 @@ Database:
 - Supabase PostgreSQL
 - Credentials supplied through `DATABASE_URL`, `DATABASE_USERNAME`, and `DATABASE_PASSWORD`
 - Setup guide: [`docs/supabase-postgres.md`](docs/supabase-postgres.md)
-- Production migrations to be added with Flyway or Liquibase
+- Alerts guide: [`docs/alerts.md`](docs/alerts.md)
+- Production schema managed with Flyway migrations
 
 ## Portfolio Value
 
